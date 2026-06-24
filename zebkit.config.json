@@ -1,0 +1,9 @@
+{
+  "tokens": {
+    "destinationPath": "./www",
+    "assetFilePath": "/",
+    "theme": "dynamoblobs",
+    "customThemeName": "dynamoblobs",
+    "customTokenPath": "./tokens"
+  }
+}

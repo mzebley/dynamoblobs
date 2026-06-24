@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="utf-8">
+  <title>Dynamoblobs - generative SVG blobs</title>
+  <meta name="description" content="Dependency-free SVG blobs that generate, wobble, morph, and drift on render.">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+  <link rel="manifest" href="./site.webmanifest">
+  <link rel="mask-icon" href="./safari-pinned-tab.svg" color="#557c7c">
+  <meta property="og:title" content="Dynamoblobs">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dynamoblobs.markzebley.com">
+  <meta name="og:description" content="Dependency-free SVG blobs that generate, wobble, morph, and drift on render.">
+  <meta name="msapplication-TileColor" content="#e4ecec">
+  <meta name="theme-color" content="#c5d8d7">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const storageKey = "dynamoblobs-theme";
+
+      const readStoredTheme = () => {
+        try { return window.localStorage.getItem(storageKey); } catch (error) { return null; }
+      };
+
+      const prefersDark = () => {
+        try { return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches; }
+        catch (error) { return false; }
+      };
+
+      const storedTheme = readStoredTheme();
+      const theme = storedTheme === "dark" || storedTheme === "light"
+        ? storedTheme
+        : prefersDark() ? "dark" : "light";
+
+      root.dataset.theme = theme;
+      root.dataset.themeSource = storedTheme ? "manual" : "system";
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/theme-toggles@4.10.1/css/within.min.css" integrity="sha256-4qLHDhzuDV3IgrWCWtrSlFovj05xXNXXOjXF5Oxsg4Y=" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="normalize.css">
+  <link rel="stylesheet" href="main.css">
+  <link rel="stylesheet" href="zbk-dynamoblobs.min.css">
+  <style>
+    .wordmark {
+      font-family: 'Merriweather', serif;
+      color: var(--theme-dark);
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      margin: 1rem 0 0;
+      line-height: 1;
+    }
+    .blob-hero {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
+      min-height: 130px;
+    }
+  </style>
+</head>
+
+<body style="overflow:hidden" class="ink-app canvas-brand-200 display-flex font-primary font-md flex-direction-column justify-content-between line-height-5">
+  <header class="canvas-brand-200 display-flex flex-direction-column align-items-center padding-inline-105 padding-block-start-105">
+    <label tabindex="0" class="theme-toggle" title="Toggle theme">
+      <input type="checkbox" id="theme-toggle-input">
+      <span class="theme-toggle-sr">Toggle theme</span>
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="theme-toggle__within" height="1em" width="1em" viewBox="0 0 32 32" fill="currentColor">
+        <clipPath id="theme-toggle__within__clip">
+          <path d="M0 0h32v32h-32ZM6 16A1 1 0 0026 16 1 1 0 006 16"></path>
+        </clipPath>
+        <g clip-path="url(#theme-toggle__within__clip)">
+          <path d="M30.7 21.3 27.1 16l3.7-5.3c.4-.5.1-1.3-.6-1.4l-6.3-1.1-1.1-6.3c-.1-.6-.8-.9-1.4-.6L16 5l-5.4-3.7c-.5-.4-1.3-.1-1.4.6l-1 6.3-6.4 1.1c-.6.1-.9.9-.6 1.3L4.9 16l-3.7 5.3c-.4.5-.1 1.3.6 1.4l6.3 1.1 1.1 6.3c.1.6.8.9 1.4.6l5.3-3.7 5.3 3.7c.5.4 1.3.1 1.4-.6l1.1-6.3 6.3-1.1c.8-.1 1.1-.8.7-1.4zM16 25.1c-5.1 0-9.1-4.1-9.1-9.1 0-5.1 4.1-9.1 9.1-9.1s9.1 4.1 9.1 9.1c0 5.1-4 9.1-9.1 9.1z"></path>
+        </g>
+        <path class="theme-toggle__within__circle" d="M16 7.7c-4.6 0-8.2 3.7-8.2 8.2s3.6 8.4 8.2 8.4 8.2-3.7 8.2-8.2-3.6-8.4-8.2-8.4zm0 14.4c-3.4 0-6.1-2.9-6.1-6.2s2.7-6.1 6.1-6.1c3.4 0 6.1 2.9 6.1 6.2s-2.7 6.1-6.1 6.1z"></path>
+        <path class="theme-toggle__within__inner" d="M16 9.5c-3.6 0-6.4 2.9-6.4 6.4s2.8 6.5 6.4 6.5 6.4-2.9 6.4-6.4-2.8-6.5-6.4-6.5z"></path>
+      </svg>
+    </label>
+
+    <h1 class="wordmark" id="heading">Dynamoblobs</h1>
+    <p class="ink-brand-700 font-lg measure-2 margin-block-start-1 margin-block-end-2" style="text-align:center">
+      Buttery smooth <strong>SVG blobs</strong> that <strong id="shuffle">generate, wobble &amp; morph</strong> on render.<br>
+      <span class="display-inline-block ink-brand-00 font-sm margin-block-start-05">
+        <em>Tiny and dependency-free.</em>
+      </span>
+    </p>
+
+    <div class="blob-hero">
+      <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="6000" data-blob-points="10" data-blob-variance="10" style="width:96px;height:96px"></dynamo-blob>
+      <dynamo-blob class="fill-theme fill-light" data-blob-points="7" data-blob-variance="12" style="width:120px;height:120px"></dynamo-blob>
+      <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="9000" data-blob-points="16" data-blob-variance="8" style="width:80px;height:80px"></dynamo-blob>
+      <dynamo-blob class="fill-theme fill-light" data-blob-points="12" data-blob-variance="14" style="width:104px;height:104px"></dynamo-blob>
+    </div>
+    <div style="margin-bottom:1.5rem">
+      <button onclick="regenAll()"><i data-feather="refresh-cw" class="refresh"></i>Regenerate</button>
+    </div>
+
+    <div id="loading">
+      <div class="loader" tabindex="0" aria-label="loading content"></div>
+    </div>
+  </header>
+
+  <main class="content-layout canvas-app">
+    <aside id="toc" aria-label="Table of contents">
+      <div class="toc-placeholder">Loading table of contents…</div>
+    </aside>
+    <div class="content-column">
+      <section class="box" aria-labelledby="installationHeader">
+        <div data-snippet="installation-header" id="installation-header"><h2 id="installation-header">Installation</h2>
+
+<p>To keep render times functionally instant, <strong>Dynamoblobs</strong> intentionally skips pulling in a library such as <strong>SVG.js</strong> to build a new shape on execution.</p>
+<p>Instead, it builds a randomly seeded closed <strong><code>&lt;path&gt;</code></strong> from criteria you set, then leverages an HTML web component (sorry, IE) to read its own attributes and swap itself in for a slick lil' blob — one that wobbles, morphs, and can even drift around its container.</p>
+<p>You can install <strong>Dynamoblobs</strong> via npm, a CDN, or by including the script file directly in your project.</p>
+</div>
+        <div data-snippet="npm-installation" id="npm-installation"><h3 id="npm-installation">npm Installation</h3>
+
+<p>To install <strong>Dynamoblobs</strong> via npm, run the following command:</p>
+<pre><code class="language-bash">npm install dynamoblobs
+</code></pre>
+<p>After installation, import <strong>Dynamoblobs</strong> once in your JavaScript or TypeScript entry file to register the element globally:</p>
+<pre><code class="language-javascript">import 'dynamoblobs';
+</code></pre>
+</div>
+        <div data-snippet="angular-installation" id="angular-installation"><h3 id="angular-installation">Angular Setup</h3>
+
+<p>To use <strong>Dynamoblobs</strong> in an Angular project, follow these additional steps after installing via npm:</p>
+<ol>
+<li>In your <code class="file-name">angular.json</code> file, add the <code class="file-name">dynamoblobs</code> script to the <code class="file-name">scripts</code> array:</li>
+</ol>
+<pre><code class="language-json">"scripts": [
+    "node_modules/dynamoblobs/dist/dynamoblobs.js"
+  ]
+</code></pre>
+<ol start="2">
+<li>In your <code class="file-name">app.module.ts</code> file, add <code class="file-name">CUSTOM_ELEMENTS_SCHEMA</code> to the <code class="file-name">schemas</code> array:</li>
+</ol>
+<pre><code class="language-typescript">import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+
+  @NgModule({
+  // ...
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  })
+
+  export class AppModule { }
+</code></pre>
+</div>
+        <div data-snippet="script-installation" id="script-installation"><h3 id="script-installation">Script Installation</h3>
+
+<p>Alternatively, include the <strong>Dynamoblobs</strong> script file directly in your project:</p>
+<pre><code class="language-html">&lt;!-- Download and add to your project locally --&gt;
+&lt;script src="path/to/dynamoblobs.js"&gt;&lt;/script&gt;
+
+&lt;!-- Or, reference the CDN --&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/mzebley/dynamoblobs/dist/dynamoblobs.min.js" crossorigin="anonymous"&gt;&lt;/script&gt;
+</code></pre>
+</div>
+      </section>
+      <section class="box" aria-labelledby="usageHeader">
+        <div data-snippet="usage-header" id="usage-header"><h2 id="usage-header">Usage</h2>
+
+<p>Since <strong>Dynamoblobs</strong> is an HTML custom element, all it takes to drop one in is to add the tag to your markup. Give it a size with CSS — the blob scales to fit its host.</p>
+<pre><code class="language-html">&lt;!-- A blob, filled with the current color of its parent --&gt;
+&lt;dynamo-blob style="width:120px;height:120px"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+<div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem">
+  <dynamo-blob class="fill-ink" style="width:120px;height:120px"></dynamo-blob>
+</div>
+
+<p>A <strong>dynamo-blob</strong> inherits any <strong><code>class</code></strong>, <strong><code>id</code></strong>, or <strong><code>style</code></strong> applied to its invoking element, and the path inherits your <strong><code>fill</code></strong>.</p>
+<pre><code class="language-html">&lt;!-- Example 1 --&gt;
+&lt;dynamo-blob style="width:120px;height:120px;fill:slateblue"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+<div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem">
+  <dynamo-blob style="width:120px;height:120px;fill:slateblue"></dynamo-blob>
+</div>
+
+<pre><code class="language-html">&lt;style&gt;
+    .fill-theme { fill: var(--theme); }
+&lt;/style&gt;
+
+&lt;!-- Example 2 --&gt;
+&lt;dynamo-blob class="fill-theme" style="width:120px;height:120px"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+<div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
+  <dynamo-blob class="fill-theme" style="width:120px;height:120px"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" style="width:90px;height:90px"></dynamo-blob>
+  <dynamo-blob class="fill-ink" style="width:70px;height:70px"></dynamo-blob>
+</div>
+</div>
+        <div data-snippet="data-attributes" id="data-attributes"><h3 id="data-attributes">Data Attributes</h3>
+
+<p><strong>Dynamoblobs</strong> ship with a set of data attributes for tuning their shape and motion.</p>
+<h4 id="points-and-variance">Points and Variance</h4>
+
+<p>A <strong>dynamo-blob</strong> generates a new, randomized silhouette each time it renders. The shape is built from <strong><code>points</code></strong> — the number of vertices around the ring — and <strong><code>variance</code></strong>, how far each vertex can deviate from the base radius.</p>
+<div class="table-container" tabindex="0">
+    <table aria-label="Blob point and variance attribute configuration table">
+    <thead>
+        <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><p style="min-width: max-content;">data-blob-points</p></td><td>10</td><td>Any integer ≥ 3</td></tr>
+        <tr><td><p>data-blob-variance</p></td><td>8</td><td>Any positive number</td></tr>
+    </tbody>
+    </table>
+</div>
+
+<pre><code class="language-html">&lt;dynamo-blob data-blob-points="14" data-blob-variance="14"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+<div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem">
+  <dynamo-blob class="fill-ink" data-blob-points="6" data-blob-variance="6" style="width:110px;height:110px"></dynamo-blob>
+  <dynamo-blob class="fill-ink" data-blob-points="10" data-blob-variance="12" style="width:110px;height:110px"></dynamo-blob>
+  <dynamo-blob class="fill-ink" data-blob-points="18" data-blob-variance="16" style="width:110px;height:110px"></dynamo-blob>
+</div>
+
+<h4 id="deterministic-blobs">Deterministic blobs</h4>
+
+<p>Every generated blob encodes its exact SVG path into <code>data-blob-seed</code>. Copy that attribute to reproduce the same shape anywhere — the two blobs below share one seed:</p>
+<pre><code class="language-html">&lt;dynamo-blob data-blob-seed="ENCODED_PATH_OR_ANY_STRING"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+<div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
+  <dynamo-blob class="fill-theme" data-blob-seed="dynamoblobs-demo" style="width:110px;height:110px"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-seed="dynamoblobs-demo" style="width:110px;height:110px"></dynamo-blob>
+</div>
+
+<div class="note"><p>A seed can be the compact path string the component writes back to <code>data-blob-seed</code> (reproduces the exact path), or any arbitrary string (deterministically seeds generation).</p></div>
+
+<h4 id="blob-wobble">Wobble</h4>
+
+<p>By default a blob gently <strong>wobbles</strong> — a continuous CSS turn, skew, and scale. Tune or disable it.</p>
+<div class="table-container" tabindex="0">
+    <table aria-label="Blob wobble attribute configuration table">
+    <thead>
+        <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><p>data-blob-wobble</p></td><td>true</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-wobble-speed</p></td><td>30</td><td>Period in seconds</td></tr>
+        <tr><td><p>data-blob-wobble-amount</p></td><td>2</td><td>Skew intensity multiplier</td></tr>
+    </tbody>
+    </table>
+</div>
+
+<pre><code class="language-html">&lt;dynamo-blob data-blob-wobble-speed="12" data-blob-wobble-amount="3"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+<div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
+  <dynamo-blob class="fill-theme" data-blob-wobble-speed="10" data-blob-wobble-amount="3" style="width:120px;height:120px"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" data-blob-wobble="false" style="width:120px;height:120px"></dynamo-blob>
+</div>
+
+<h4 id="blob-animation">Morph Animation</h4>
+
+<p>Want a blob that endlessly reshapes itself? Reach for <strong><code>data-blob-animate</code></strong> and <strong><code>data-blob-speed</code></strong> — the blob continuously regenerates and morphs between silhouettes.</p>
+<div class="table-container" tabindex="0">
+    <table aria-label="Blob animation attribute configuration table">
+    <thead>
+        <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><p>data-blob-animate</p></td><td>false</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-speed</p></td><td>7500</td><td>Morph duration in milliseconds</td></tr>
+    </tbody>
+    </table>
+</div>
+<div class="note"><p><strong>Accessibility Note:</strong> <strong>data-blob-animate</strong> is ignored when the viewer's browser has <strong>reduced motion</strong> enabled.</p></div>
+
+<pre><code class="language-html">&lt;dynamo-blob data-blob-animate="true" data-blob-speed="4000"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+<div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
+  <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="4000" style="width:130px;height:130px"></dynamo-blob>
+</div>
+
+<h4 id="blob-drift">Drift &amp; Click</h4>
+
+<p>Set <strong><code>data-blob-drift</code></strong> and the blob will bounce around its nearest <strong>positioned, sized</strong> ancestor. Add <strong><code>data-blob-click</code></strong> to send it off in a new direction on click. Stack a few for an ambient background.</p>
+<div class="table-container" tabindex="0">
+    <table aria-label="Blob drift attribute configuration table">
+    <thead>
+        <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><p>data-blob-drift</p></td><td>false</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-drift-speed</p></td><td>1.25</td><td>Any positive number</td></tr>
+        <tr><td><p>data-blob-click</p></td><td>false</td><td>true, false</td></tr>
+    </tbody>
+    </table>
+</div>
+
+<pre><code class="language-html">&lt;div style="position:relative;height:240px"&gt;
+  &lt;dynamo-blob data-blob-drift="true" data-blob-click="true" style="width:70px;height:70px"&gt;&lt;/dynamo-blob&gt;
+&lt;/div&gt;
+</code></pre>
+<div style="position:relative;height:240px;border:1px solid var(--theme);border-radius:12px;overflow:hidden;margin-top:1rem">
+  <dynamo-blob class="fill-theme" data-blob-drift="true" data-blob-click="true" data-blob-drift-speed="2" style="width:64px;height:64px"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" data-blob-drift="true" data-blob-click="true" data-blob-drift-speed="3" data-blob-points="8" style="width:90px;height:90px"></dynamo-blob>
+  <dynamo-blob class="fill-ink" data-blob-drift="true" data-blob-click="true" data-blob-drift-speed="1.5" data-blob-points="14" style="width:48px;height:48px"></dynamo-blob>
+</div>
+<p class="note"><strong>Tip:</strong> click a blob above to deflect it.</p>
+
+<h4 id="blob-observation">Observation</h4>
+
+<p>Leaning into generative design? <strong><code>data-blob-observe</code></strong> wires up an <a class="link" rel="external" target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">IntersectionObserver</a> that regenerates the blob as it leaves the viewport.</p>
+<div class="table-container" tabindex="0">
+    <table aria-label="Blob observation attribute configuration table">
+    <thead>
+        <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><p>data-blob-observe</p></td><td>unset</td><td>
+            <ul>
+            <li><strong><code>once</code></strong> Regenerate once when leaving the viewport</li>
+            <li><strong><code>continuous</code></strong> Regenerate every time it leaves</li>
+            <li><strong><code>once:300px</code></strong> Add a custom root margin</li>
+            <li><strong><code>continuous:100px</code></strong> Combine mode with margin</li>
+            </ul>
+        </td></tr>
+    </tbody>
+    </table>
+</div>
+
+<pre><code class="language-html">&lt;dynamo-blob data-blob-observe="continuous:100px"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
+</div>
+        <div data-snippet="usage-functions" id="usage-functions"><h3 id="available-functions">Available Functions</h3>
+
+<p><strong>Dynamoblobs</strong> expose a small runtime API for controlling a blob after it has rendered.</p>
+<h4 id="generate-new-blob">.generateNewBlob()</h4>
+
+<p>Want a fresh shape? Call <strong><code>generateNewBlob(<em>duration</em>)</code></strong> on the blob you'd like to regenerate. The optional <strong><code>duration</code></strong> controls how quickly the old silhouette morphs into the new one — default is <strong>800</strong>(ms).</p>
+<pre><code class="language-javascript">const blob = document.querySelector('dynamo-blob');
+blob.generateNewBlob(500);
+</code></pre>
+<div style="display:flex;gap:1.25rem;align-items:center">
+  <dynamo-blob class="fill-theme" id="regen-example-blob" style="width:120px;height:120px"></dynamo-blob>
+</div>
+
+<p><button style="margin:1rem 0 2rem" onclick="regenBlob('regen-example-blob', 500)"><i data-feather="refresh-cw"></i>New Blob</button></p>
+<h4 id="play">.play()</h4>
+
+<p>Call <strong><code>play(<em>duration</em>)</code></strong> on any blob you'd like to continuously morph between silhouettes. The optional <strong><code>duration</code></strong> sets the length of each morph cycle — default is <strong>7500</strong>(ms).</p>
+<h4 id="pause">.pause()</h4>
+
+<p>To stop the morph loop, call <strong><code>pause()</code></strong> on the blob.</p>
+<pre><code class="language-javascript">const blob = document.querySelector('dynamo-blob');
+
+function toggleBlobAnimation() {
+  if (blob.isAnimating) {
+    blob.pause();
+  } else {
+    blob.play(5000);
+  }
+}
+</code></pre>
+<div style="display:flex;gap:1.25rem;align-items:center">
+  <dynamo-blob class="fill-theme" id="play-example-blob" style="width:120px;height:120px"></dynamo-blob>
+</div>
+
+<p><button style="margin:1rem .5rem 0 0" onclick="play('play-example-blob', 5000)"><i data-feather="play"></i>Play</button>
+<button style="margin-top:1rem" onclick="pause('play-example-blob')"><i data-feather="pause"></i>Pause</button></p>
+<h4 id="deflect">.deflect()</h4>
+
+<p>For a drifting blob (see <code>data-blob-drift</code>), <strong><code>deflect()</code></strong> kicks it off in a new random direction — the same thing a click does when <code>data-blob-click</code> is set.</p>
+<div class="note"><p><strong>Need to know when a morph finishes?</strong> Listen for the <code>dynamo-blob-complete</code> event to react when a cycle ends.</p></div>
+
+<pre><code class="language-javascript">document.querySelector('dynamo-blob')
+  .addEventListener('dynamo-blob-complete', (event) =&gt; {
+    console.log('Blob finished morphing', event.detail);
+  });
+</code></pre>
+</div>
+      </section>
+      <section class="box margin-block-start-1" aria-labelledby="practicalApplicationHeader">
+        <div data-snippet="examples" id="examples"><h2 id="practicalApplicationHeader">Practical Application</h2>
+
+<p><strong>Dynamoblobs</strong> are entirely style-agnostic out of the box. The onus is on you to size and color them for your platform — but that also means nearly endless room for customization.</p>
+<h3 id="layered-background">Ambient layered background</h3>
+
+<p>A few drifting blobs at low opacity make a living, generative backdrop — the same trick behind a hero section. Stack them in a positioned, clipped container.</p>
+<pre><code class="language-html">&lt;div class="hero" style="position:relative;overflow:hidden"&gt;
+  &lt;dynamo-blob data-blob-drift="true" style="width:160px;height:160px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
+  &lt;dynamo-blob data-blob-drift="true" style="width:110px;height:110px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
+  &lt;dynamo-blob data-blob-drift="true" style="width:80px;height:80px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
+  &lt;h2&gt;Generative by default&lt;/h2&gt;
+&lt;/div&gt;
+</code></pre>
+<div style="position:relative;height:280px;border-radius:14px;overflow:hidden;background:var(--zbk-app-canvas-muted, #1c1c22);display:grid;place-items:center">
+  <dynamo-blob class="fill-theme" data-blob-drift="true" data-blob-drift-speed="1" data-blob-points="16" style="width:160px;height:160px;opacity:.45"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" data-blob-drift="true" data-blob-drift-speed="1.5" data-blob-points="10" style="width:110px;height:110px;opacity:.5"></dynamo-blob>
+  <dynamo-blob class="fill-ink" data-blob-drift="true" data-blob-drift-speed="0.75" data-blob-points="18" style="width:80px;height:80px;opacity:.4"></dynamo-blob>
+  <h2 id="generative-by-default" style="position:relative;margin:0;color:var(--theme);font-family:'Merriweather',serif">Generative by default</h2>
+</div>
+
+<h3 id="avatar-mask">Organic avatar accent</h3>
+
+<p>Pair a static blob with content for a soft, hand-drawn frame that's never quite the same twice.</p>
+<pre><code class="language-html">&lt;div style="display:flex;align-items:center;gap:1rem"&gt;
+  &lt;dynamo-blob data-blob-animate="true" data-blob-speed="9000"
+    style="width:96px;height:96px;fill:var(--theme)"&gt;&lt;/dynamo-blob&gt;
+  &lt;div&gt;
+    &lt;h3&gt;Eye-catching headline.&lt;/h3&gt;
+    &lt;p&gt;Further information to draw interest.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<div class="widget" id="widget_example_3" style="min-height:max-content;display:flex;align-items:center;gap:1.25rem;padding:1rem">
+  <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="9000" style="width:96px;height:96px;flex:none"></dynamo-blob>
+  <div class="content" style="align-self:center">
+    <h2 id="eye-catching-headline" style="font-family:'Merriweather',serif;color:var(--theme);margin:0">Eye-catching headline.</h2>
+    <p style="margin:.25rem 0 0">Further information to draw interest.</p>
+  </div>
+</div>
+
+<h3 id="transition-flair">Transition flair</h3>
+
+<p>Trigger a morph on interaction to add some pizzazz to state changes.</p>
+<div class="widget" id="widget_example_2" style="padding:1.5rem;text-align:center">
+  <dynamo-blob class="fill-theme fill-light" id="transition-blob-example" style="width:120px;height:120px"></dynamo-blob>
+  <div class="content">
+    <button style="margin-top:1rem" id="transition-blob-button" onclick="transition()">
+      <span>Shuffle</span>
+      <i data-feather="chevrons-right"></i>
+    </button>
+  </div>
+</div>
+</div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="canvas-brand-200 padding-inline-105 padding-block-end-05 display-flex">
+    <div style="align-self: center;">
+      <a href="https://github.com/mzebley/dynamoblobs" rel="external" style="display:inline-flex;align-items: center;gap:.25rem" aria-label="External link to Dynamoblobs on Github" target="_blank">
+        <i style="color:var(--theme);margin: -2px 0.5rem 0 0;" data-feather="github"></i>
+        <p style="font-size:1rem;color:var(--theme-dark);line-height: 1.325rem;">
+          <em><strong>Dynamoblobs</strong></em><br>on <strong>Github</strong>
+        </p>
+      </a>
+    </div>
+    <div style="align-self: center;">
+      <a href="https://www.npmjs.com/package/dynamoblobs" rel="external" style="display:inline-flex;align-items: center;gap:.25rem" aria-label="External link to Dynamoblobs on npmjs" target="_blank">
+        <i style="color:var(--theme);margin: -2px 0.5rem 0 0;" data-feather="code"></i>
+        <p style="font-size:1rem;color:var(--theme-dark);line-height: 1.325rem;">
+          <em><strong>Dynamoblobs</strong></em><br>on <strong>npmjs</strong>
+        </p>
+      </a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+  <script type="module">
+    const snippetTargets = document.querySelectorAll("[data-snippet]");
+    const snippetTargetMap = new Map();
+
+    snippetTargets.forEach((el) => {
+      const slug = el.dataset.snippet;
+      if (!slug) return;
+      if (!el.id) el.id = `snippet-${slug}`;
+      snippetTargetMap.set(slug, el);
+    });
+
+    const highlightIfAvailable = () => {
+      if (window.hljs?.highlightAll) window.hljs.highlightAll();
+    };
+
+    const setLoadingAnimation = () => {
+      const loader = document.getElementById("loading");
+      if (!loader) { document.body.style.overflow = ""; return; }
+      loader.classList.add("hide");
+      setTimeout(() => { loader.innerHTML = ""; document.body.style.overflow = ""; }, 225);
+    };
+
+    const buildTableOfContents = (entries = []) => {
+      const toc = document.getElementById("toc");
+      if (!toc) return;
+
+      const grouped = entries.reduce((acc, entry) => {
+        const slug = entry.slug;
+        if (!slug || !snippetTargetMap.has(slug)) return acc;
+        const groupKey = entry.extra?.group ?? entry.group;
+        if (!groupKey) return acc;
+        const label = entry.extra?.groupLabel ?? groupKey.replace(/-/g, " ");
+        const groupOrder = Number(entry.extra?.groupOrder ?? entry.order ?? Number.MAX_SAFE_INTEGER);
+        const itemOrder = Number(entry.order ?? Number.MAX_SAFE_INTEGER);
+        if (!acc[groupKey]) acc[groupKey] = { label, order: groupOrder, items: [] };
+        acc[groupKey].order = Math.min(acc[groupKey].order, groupOrder);
+        acc[groupKey].items.push({ label: entry.title ?? slug, slug, order: itemOrder });
+        return acc;
+      }, {});
+
+      const groupEntries = Object.values(grouped)
+        .map((group) => ({ ...group, items: group.items.sort((a, b) => a.order - b.order) }))
+        .sort((a, b) => a.order - b.order);
+
+      toc.innerHTML = "";
+      if (!groupEntries.length) {
+        toc.innerHTML = '<p class="toc-empty">Snippets with group metadata will appear here.</p>';
+        return;
+      }
+
+      const heading = document.createElement("p");
+      heading.className = "toc-heading";
+      heading.textContent = "On this page";
+      toc.appendChild(heading);
+
+      groupEntries.forEach((group) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "toc-group";
+        const title = document.createElement("p");
+        title.className = "toc-group-title";
+        title.textContent = group.label;
+        wrapper.appendChild(title);
+        const list = document.createElement("ul");
+        list.className = "toc-list";
+        group.items.forEach((item) => {
+          const target = snippetTargetMap.get(item.slug);
+          if (!target) return;
+          const li = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = `#${target.id}`;
+          link.textContent = item.label;
+          link.className = "toc-link";
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+            if (window.history?.replaceState) window.history.replaceState(null, "", `#${target.id}`);
+          });
+          li.appendChild(link);
+          list.appendChild(li);
+        });
+        if (list.children.length) { wrapper.appendChild(list); toc.appendChild(wrapper); }
+      });
+    };
+
+    async function init() {
+      try {
+        const response = await fetch("./snippets/snippets-index.json");
+        if (!response.ok) throw new Error(`Failed to fetch manifest: ${response.status}`);
+        const manifest = await response.json();
+        buildTableOfContents(manifest);
+      } catch (error) {
+        console.error("mark↓: failed to build table of contents", error);
+        const toc = document.getElementById("toc");
+        if (toc && !toc.innerHTML.trim()) toc.innerHTML = '<p class="toc-empty">Table of contents unavailable.</p>';
+      } finally {
+        highlightIfAvailable();
+        setLoadingAnimation();
+        if (window.feather?.replace) feather.replace({ "stroke-width": ".175rem" });
+      }
+    }
+
+    if (snippetTargets.length > 0) {
+      init();
+    } else {
+      highlightIfAvailable();
+      setLoadingAnimation();
+      if (window.feather?.replace) feather.replace({ "stroke-width": ".175rem" });
+    }
+  </script>
+  <script>
+    (function () {
+      const storageKey = "dynamoblobs-theme";
+      const root = document.documentElement;
+      const toggleLabel = document.querySelector(".theme-toggle");
+      const toggle = document.querySelector(".theme-toggle input[type=\"checkbox\"]");
+      const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+      const readStoredTheme = () => { try { return window.localStorage.getItem(storageKey); } catch (e) { return null; } };
+      const writeStoredTheme = (v) => { try { window.localStorage.setItem(storageKey, v); } catch (e) {} };
+      const clearStoredTheme = () => { try { window.localStorage.removeItem(storageKey); } catch (e) {} };
+
+      const applyTheme = (theme, source) => {
+        const nextTheme = theme === "dark" ? "dark" : "light";
+        root.dataset.theme = nextTheme;
+        root.dataset.themeSource = source;
+        if (toggle) toggle.checked = nextTheme === "dark";
+      };
+
+      const storedTheme = (() => {
+        const value = readStoredTheme();
+        return value === "dark" || value === "light" ? value : null;
+      })();
+
+      const initialTheme = root.dataset.theme || storedTheme || (mediaQuery && mediaQuery.matches ? "dark" : "light");
+      const initialSource = root.dataset.themeSource || (storedTheme ? "manual" : "system");
+      applyTheme(initialTheme, initialSource);
+
+      const handleToggle = (event) => {
+        const nextTheme = event.target.checked ? "dark" : "light";
+        applyTheme(nextTheme, "manual");
+        writeStoredTheme(nextTheme);
+      };
+      if (toggle) toggle.addEventListener("change", handleToggle);
+
+      const handleLabelKeydown = (event) => {
+        const isActivationKey = event.key === "Enter" || event.key === " " || event.key === "Spacebar";
+        if (!isActivationKey || !toggle) return;
+        event.preventDefault();
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+      if (toggleLabel) toggleLabel.addEventListener("keydown", handleLabelKeydown);
+
+      const handleSystemPreferenceChange = (event) => {
+        if (root.dataset.themeSource === "manual") return;
+        applyTheme(event.matches ? "dark" : "light", "system");
+        clearStoredTheme();
+      };
+      if (mediaQuery) {
+        if (mediaQuery.addEventListener) mediaQuery.addEventListener("change", handleSystemPreferenceChange);
+        else if (mediaQuery.addListener) mediaQuery.addListener(handleSystemPreferenceChange);
+      }
+    })();
+  </script>
+  <script>
+    function regenBlob(id, duration = 800) { document.getElementById(id)?.generateNewBlob(duration); }
+    function play(id, duration = 7500) { document.getElementById(id)?.play(duration); }
+    function pause(id) { document.getElementById(id)?.pause(); }
+    function regenAll() {
+      document.querySelectorAll(".blob-hero dynamo-blob").forEach((b) => b.generateNewBlob(700));
+    }
+    function transition() {
+      document.getElementById("transition-blob-example")?.generateNewBlob(500);
+    }
+  </script>
+  <script src="dynamoblobs.min.js"></script>
+
+
+
+
+</body></html>
