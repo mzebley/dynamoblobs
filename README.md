@@ -62,6 +62,7 @@ import 'dynamoblobs';
 | `data-blob-points` | `10` | Vertex count — higher is busier. Minimum 3. |
 | `data-blob-variance` | `8` | Radius deviation — higher is lumpier. |
 | `data-blob-seed` | _unset_ | A base64 path reproduces an exact shape; any other string deterministically seeds generation. |
+| `data-blob-morph` | `600` | Tween duration (ms) when a shape attribute changes live. `0` snaps. |
 | `data-blob-animate` | `false` | Auto-run the morph loop on render (skipped under reduced motion). |
 | `data-blob-speed` | `7500` | Morph-loop duration in milliseconds. |
 | `data-blob-observe` | _unset_ | Regenerate as the element enters/leaves the viewport: `once:0px` or `continuous:64px`. |
@@ -71,6 +72,9 @@ import 'dynamoblobs';
 | `data-blob-drift` | `false` | Drift around the nearest positioned ancestor, bouncing off the walls. |
 | `data-blob-drift-speed` | `1.25` | Drift velocity. |
 | `data-blob-click` | `false` | Deflect to a new direction on click (requires drift). |
+| `data-blob-paused` | _unset_ | When present, freezes wobble, drift, and the morph loop in place. Remove to resume. |
+
+**Attributes are reactive.** Change any of them after render and the element re-tunes in place — shape changes morph over `data-blob-morph`, and motion toggles (drift, animate, paused) apply live. This makes `<dynamo-blob>` a natural fit for framework bindings.
 
 ## JavaScript API
 

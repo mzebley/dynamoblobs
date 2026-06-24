@@ -40,8 +40,10 @@ declare class DynamoBlob extends HTMLElement {
 
   constructor();
 
+  static readonly observedAttributes: string[];
   connectedCallback(): void;
   disconnectedCallback(): void;
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
 
   /** Start the continuous morph loop. */
   play(customDuration?: number | null): void;
@@ -84,6 +86,7 @@ interface DynamoBlobAttributes {
   'data-blob-points'?: string;
   'data-blob-variance'?: string;
   'data-blob-seed'?: string;
+  'data-blob-morph'?: string;
   'data-blob-animate'?: string;
   'data-blob-speed'?: string;
   'data-blob-observe'?: string;
@@ -93,6 +96,7 @@ interface DynamoBlobAttributes {
   'data-blob-drift'?: string;
   'data-blob-drift-speed'?: string;
   'data-blob-click'?: string;
+  'data-blob-paused'?: string;
 }
 
 declare global {

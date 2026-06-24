@@ -61,6 +61,9 @@ const BLOB_CSS = `
 .dynamo-blob-host[data-blob-wobble="false"] .dynamo-blob__turn,
 .dynamo-blob-host[data-blob-wobble="false"] .dynamo-blob__skew,
 .dynamo-blob-host[data-blob-wobble="false"] .dynamo-blob__scale { animation: none; }
+.dynamo-blob-host[data-blob-paused] .dynamo-blob__turn,
+.dynamo-blob-host[data-blob-paused] .dynamo-blob__skew,
+.dynamo-blob-host[data-blob-paused] .dynamo-blob__scale { animation-play-state: paused; }
 @keyframes dynamo-blob-turn { to { transform: rotate(360deg); } }
 @keyframes dynamo-blob-skew {
   0%   { transform: skewY(0deg); }
@@ -120,6 +123,23 @@ function isTruthyAttr(value) {
 }
 
 class DynamoBlob extends HTMLElement {
+  static get observedAttributes() {
+    return [
+      "data-blob-points",
+      "data-blob-variance",
+      "data-blob-seed",
+      "data-blob-morph",
+      "data-blob-speed",
+      "data-blob-animate",
+      "data-blob-wobble-speed",
+      "data-blob-wobble-amount",
+      "data-blob-drift",
+      "data-blob-drift-speed",
+      "data-blob-click",
+      "data-blob-paused",
+    ];
+  }
+
   constructor() {
     super();
 
@@ -143,6 +163,13 @@ class DynamoBlob extends HTMLElement {
 
     this.intersectionObserver = null;
     this.random = Math.random;
+    this.seedString = null;
+    this.driftSpeed = 1.25;
+    this.morphMs = 600;
+    this._connected = false;
+    this._hasUserSeed = false;
+    this._writingSeed = null;
+    this._seedPath = null;
 
     this.play = this.play.bind(this);
     this.pause = this.pause.bind(this);
@@ -158,41 +185,10 @@ class DynamoBlob extends HTMLElement {
 
     const id = this.id || Math.random().toString(36).slice(2, 8);
 
-    const pointsAttr = parseInt(this.getAttribute("data-blob-points"), 10);
-    this.points = Number.isFinite(pointsAttr) ? Math.max(3, pointsAttr) : 10;
-
-    const varianceAttr = parseFloat(this.getAttribute("data-blob-variance"));
-    this.variance = Number.isFinite(varianceAttr) ? varianceAttr : 8;
-
-    this.speed = parseFloat(this.getAttribute("data-blob-speed")) || 7500;
-
-    // Seed: a decodable path reproduces an exact shape; any other non-empty seed
-    // string deterministically drives generation; otherwise it's random.
-    const seedAttr = this.getAttribute("data-blob-seed");
-    const decoded = decodeBlobSeed(seedAttr);
-    const decodedSeedPath =
-      decoded && decoded.trim().startsWith("M") ? decoded : null;
-    const hasSeedAttr = typeof seedAttr === "string" && seedAttr.trim() !== "";
-    this.random =
-      hasSeedAttr && !decodedSeedPath ? createSeededRandom(seedAttr) : Math.random;
-
-    // Wobble custom properties
-    const wobbleSpeed = parseFloat(this.getAttribute("data-blob-wobble-speed"));
-    this.style.setProperty(
-      "--dynamo-blob-time",
-      `${Number.isFinite(wobbleSpeed) ? wobbleSpeed : 30}s`,
-    );
-    const wobbleAmount = parseFloat(this.getAttribute("data-blob-wobble-amount"));
-    this.style.setProperty(
-      "--dynamo-blob-amount",
-      String(Number.isFinite(wobbleAmount) ? wobbleAmount : 2),
-    );
-    if (this.getAttribute("data-blob-wobble") === "false") {
-      this.setAttribute("data-blob-wobble", "false");
-    }
+    this._readConfig();
 
     // Initial silhouettes
-    this.currentPath = decodedSeedPath || this.generatePathString();
+    this.currentPath = this._seedPath || this.generatePathString();
     this.updateSeedAttribute(this.currentPath);
     this.targetPath = this.generatePathString();
 
@@ -215,11 +211,7 @@ class DynamoBlob extends HTMLElement {
     this.svg = this.querySelector("svg");
     this.path = this.querySelector("path");
 
-    // Click-to-deflect
-    if (isTruthyAttr(this.getAttribute("data-blob-click"))) {
-      this.setAttribute("data-blob-clickable", "");
-      this.addEventListener("click", this._onClick);
-    }
+    this._applyClick();
 
     // Viewport-triggered regeneration
     const observeAttr = this.getAttribute("data-blob-observe");
@@ -231,11 +223,166 @@ class DynamoBlob extends HTMLElement {
     }
 
     // Auto-animate the morph loop
-    if (
-      this.getAttribute("data-blob-animate") === "true" &&
-      !prefersReducedMotion()
-    ) {
+    if (this.getAttribute("data-blob-animate") === "true" && !prefersReducedMotion()) {
       this.play();
+    }
+
+    this._connected = true;
+  }
+
+  // Attributes are reactive: change one and the element re-tunes in place.
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this._connected) return;
+    switch (name) {
+      case "data-blob-points":
+      case "data-blob-variance":
+        this._readConfig();
+        this._retuneShape();
+        break;
+      case "data-blob-seed":
+        if (newValue === this._writingSeed) return; // ignore our own write-back
+        this._readConfig();
+        this._retuneShape();
+        break;
+      case "data-blob-morph":
+        this._readConfig();
+        break;
+      case "data-blob-drift-speed": {
+        const prev = this.driftSpeed;
+        this._readConfig();
+        if (this.driftFrameId && prev) {
+          const ratio = this.driftSpeed / prev;
+          this.driftVelX *= ratio;
+          this.driftVelY *= ratio;
+        }
+        break;
+      }
+      case "data-blob-wobble-speed":
+      case "data-blob-wobble-amount":
+        this._applyWobbleVars();
+        break;
+      case "data-blob-speed":
+        this._readConfig();
+        if (this.isAnimating) {
+          this.pause();
+          this.play();
+        }
+        break;
+      case "data-blob-animate":
+        if (newValue === "true" && !prefersReducedMotion()) this.play();
+        else this.pause();
+        break;
+      case "data-blob-drift":
+        if (isTruthyAttr(newValue) && !prefersReducedMotion()) this.startDrift();
+        else this.stopDrift();
+        break;
+      case "data-blob-click":
+        this._applyClick();
+        break;
+      case "data-blob-paused":
+        if (newValue !== null && newValue !== "false") {
+          this.stopDrift();
+          this.pause();
+        } else {
+          if (isTruthyAttr(this.getAttribute("data-blob-drift")) && !prefersReducedMotion())
+            this.startDrift();
+          if (this.getAttribute("data-blob-animate") === "true" && !prefersReducedMotion())
+            this.play();
+        }
+        break;
+    }
+  }
+
+  _readConfig() {
+    const pointsAttr = parseInt(this.getAttribute("data-blob-points"), 10);
+    this.points = Number.isFinite(pointsAttr) ? Math.max(3, pointsAttr) : 10;
+
+    const varianceAttr = parseFloat(this.getAttribute("data-blob-variance"));
+    this.variance = Number.isFinite(varianceAttr) ? varianceAttr : 8;
+
+    this.speed = parseFloat(this.getAttribute("data-blob-speed")) || 7500;
+
+    const morphAttr = parseFloat(this.getAttribute("data-blob-morph"));
+    this.morphMs = Number.isFinite(morphAttr) ? morphAttr : 600;
+
+    const driftAttr = parseFloat(this.getAttribute("data-blob-drift-speed"));
+    this.driftSpeed = Number.isFinite(driftAttr) ? driftAttr : 1.25;
+
+    // Seed: a decodable path reproduces an exact shape; any other non-empty
+    // string deterministically drives generation; otherwise it's random.
+    const seedAttr = this.getAttribute("data-blob-seed");
+    const hasSeed = typeof seedAttr === "string" && seedAttr.trim() !== "";
+    this._hasUserSeed = hasSeed && seedAttr !== this._writingSeed;
+    if (hasSeed) {
+      const decoded = decodeBlobSeed(seedAttr);
+      if (decoded && decoded.trim().startsWith("M")) {
+        this._seedPath = decoded;
+        this.seedString = null;
+      } else {
+        this._seedPath = null;
+        this.seedString = seedAttr;
+      }
+    } else {
+      this._seedPath = null;
+      this.seedString = null;
+    }
+
+    this._applyWobbleVars();
+  }
+
+  _applyWobbleVars() {
+    const wobbleSpeed = parseFloat(this.getAttribute("data-blob-wobble-speed"));
+    this.style.setProperty(
+      "--dynamo-blob-time",
+      `${Number.isFinite(wobbleSpeed) ? wobbleSpeed : 30}s`,
+    );
+    const wobbleAmount = parseFloat(this.getAttribute("data-blob-wobble-amount"));
+    this.style.setProperty(
+      "--dynamo-blob-amount",
+      String(Number.isFinite(wobbleAmount) ? wobbleAmount : 2),
+    );
+  }
+
+  _applyClick() {
+    if (isTruthyAttr(this.getAttribute("data-blob-click"))) {
+      this.setAttribute("data-blob-clickable", "");
+      this.addEventListener("click", this._onClick);
+    } else {
+      this.removeAttribute("data-blob-clickable");
+      this.removeEventListener("click", this._onClick);
+    }
+  }
+
+  _makeRandom() {
+    return this.seedString != null ? createSeededRandom(this.seedString) : Math.random;
+  }
+
+  // Morph the displayed shape toward the current attributes (live retuning).
+  // Baselines from what's on screen so rapid changes redirect smoothly.
+  _retuneShape() {
+    if (!this.path) return;
+    const target = this._seedPath || this.generatePathString();
+    if (this.isAnimating) {
+      this.targetPath = target;
+      this.pendingPath = null;
+      return;
+    }
+    this.currentPath = this.path.getAttribute("d") || this.currentPath;
+    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+    this.animationFrameId = null;
+    this.elapsedTime = 0;
+    this.startTime = null;
+    this.targetPath = target;
+    const dur = prefersReducedMotion() ? 0 : this.morphMs;
+    if (dur <= 0) {
+      this.currentPath = target;
+      this.path.setAttribute("d", target);
+      this.updateSeedAttribute(target);
+    } else {
+      this.animateBlob(dur, () => {
+        this.currentPath = this.targetPath;
+        this.updateSeedAttribute(this.currentPath);
+      });
     }
   }
 
@@ -253,7 +400,7 @@ class DynamoBlob extends HTMLElement {
     return generateBlobPath({
       points: this.points,
       variance: this.variance,
-      random: this.random,
+      random: this._makeRandom(),
     });
   }
 
@@ -336,8 +483,11 @@ class DynamoBlob extends HTMLElement {
   }
 
   updateSeedAttribute(pathString) {
+    // Respect a user-provided seed; only auto-populate when none was set.
+    if (this._hasUserSeed) return;
     const encoded = encodeBlobSeed(pathString);
     if (encoded && this.getAttribute("data-blob-seed") !== encoded) {
+      this._writingSeed = encoded;
       this.setAttribute("data-blob-seed", encoded);
     }
   }
@@ -394,8 +544,7 @@ class DynamoBlob extends HTMLElement {
   }
 
   initDrift() {
-    const speedAttr = parseFloat(this.getAttribute("data-blob-drift-speed"));
-    const speed = (Number.isFinite(speedAttr) ? speedAttr : 1.25) * 0.1;
+    const speed = this.driftSpeed * 0.1;
     const { w, h, pw, ph } = this.driftBounds();
     this.driftPosX = Math.random() * Math.max(0, pw - w);
     this.driftPosY = Math.random() * Math.max(0, ph - h);
@@ -420,8 +569,7 @@ class DynamoBlob extends HTMLElement {
   }
 
   deflect() {
-    const speedAttr = parseFloat(this.getAttribute("data-blob-drift-speed"));
-    const speed = (Number.isFinite(speedAttr) ? speedAttr : 1.25) * 0.1;
+    const speed = this.driftSpeed * 0.1;
     const angle = Math.random() * 2 * Math.PI;
     this.driftVelX = Math.cos(angle) * speed;
     this.driftVelY = Math.sin(angle) * speed;
