@@ -279,8 +279,16 @@
           else this.pause();
           break;
         case "data-blob-drift":
-          if (isTruthyAttr(newValue) && !prefersReducedMotion()) this.startDrift();
-          else this.stopDrift();
+          if (isTruthyAttr(newValue) && !prefersReducedMotion()) {
+            this.startDrift();
+          } else {
+            // Fully tear down so the element returns to normal flow (re-centers),
+            // unlike data-blob-paused which freezes drift in place.
+            this.stopDrift();
+            this.removeAttribute("data-blob-drifting");
+            this.style.transform = "";
+            this.driftInitialized = false;
+          }
           break;
         case "data-blob-click":
           this._applyClick();
