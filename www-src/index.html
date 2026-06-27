@@ -313,7 +313,7 @@
   </script>
   <script>
     function regenBlob(id, duration = 800) { document.getElementById(id)?.generateNewBlob(duration); }
-    function play(id, duration = 7500) { document.getElementById(id)?.play(duration); }
+    function play(id, duration = 7500) { document.getElementById(id)?.play({ morph: duration }); }
     function pause(id) { document.getElementById(id)?.pause(); }
     function regenAll() {
       document.querySelectorAll(".blob-hero dynamo-blob").forEach((b) => b.generateNewBlob(700));

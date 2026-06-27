@@ -64,20 +64,23 @@ By default a blob gently **wobbles** — a continuous CSS turn, skew, and scale.
     </thead>
     <tbody>
         <tr><td><p>data-blob-wobble</p></td><td>true</td><td>true, false</td></tr>
-        <tr><td><p>data-blob-wobble-speed</p></td><td>30</td><td>Period in seconds</td></tr>
+        <tr><td><p>data-blob-wobble-speed</p></td><td>30000</td><td>Period in milliseconds</td></tr>
         <tr><td><p>data-blob-wobble-amount</p></td><td>2</td><td>Skew intensity multiplier</td></tr>
+        <tr><td><p>data-blob-wobble-paused</p></td><td>unset</td><td>Present to freeze the wobble in place</td></tr>
     </tbody>
     </table>
 </div>
 
 ```html
-<dynamo-blob data-blob-wobble-speed="12" data-blob-wobble-amount="3"></dynamo-blob>
+<dynamo-blob data-blob-wobble-speed="12000" data-blob-wobble-amount="3"></dynamo-blob>
 ```
 
 <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
-  <dynamo-blob class="fill-theme" data-blob-wobble-speed="10" data-blob-wobble-amount="3" style="width:120px;height:120px"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-wobble-speed="10000" data-blob-wobble-amount="3" style="width:120px;height:120px"></dynamo-blob>
   <dynamo-blob class="fill-theme fill-light" data-blob-wobble="false" style="width:120px;height:120px"></dynamo-blob>
 </div>
+
+<p>Wobble runs on its own pair of methods too — <code>playWobble(<em>ms</em>)</code> and <code>pauseWobble()</code> — or set <code>data-blob-wobble-paused</code> at render to start it frozen but resumable.</p>
 
 <h4 id="blob-animation">Morph Animation</h4>
 
