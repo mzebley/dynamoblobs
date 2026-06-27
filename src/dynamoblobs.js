@@ -39,7 +39,7 @@ const BLOB_CSS = `
   height: 100%;
   transform-origin: center;
   will-change: transform;
-  animation: dynamo-blob-turn var(--dynamo-blob-time, 30s) linear infinite;
+  animation: dynamo-blob-turn var(--dynamo-blob-time, 30000ms) linear infinite;
 }
 .dynamo-blob__skew {
   display: block;
@@ -49,13 +49,13 @@ const BLOB_CSS = `
   transform-origin: center;
   transform-box: fill-box;
   will-change: transform;
-  animation: dynamo-blob-skew calc(var(--dynamo-blob-time, 30s) * 0.5) linear infinite;
+  animation: dynamo-blob-skew calc(var(--dynamo-blob-time, 30000ms) * 0.5) linear infinite;
 }
 .dynamo-blob__scale {
   transform-origin: center;
   transform-box: fill-box;
   will-change: transform;
-  animation: dynamo-blob-scale calc(var(--dynamo-blob-time, 30s) * 0.5) ease-in-out infinite;
+  animation: dynamo-blob-scale calc(var(--dynamo-blob-time, 30000ms) * 0.5) ease-in-out infinite;
 }
 .dynamo-blob__path { fill: inherit; }
 .dynamo-blob-host[data-blob-wobble="false"] .dynamo-blob__turn,
@@ -64,6 +64,9 @@ const BLOB_CSS = `
 .dynamo-blob-host[data-blob-paused] .dynamo-blob__turn,
 .dynamo-blob-host[data-blob-paused] .dynamo-blob__skew,
 .dynamo-blob-host[data-blob-paused] .dynamo-blob__scale { animation-play-state: paused; }
+.dynamo-blob-host[data-blob-wobble-paused]:not([data-blob-wobble-paused="false"]) .dynamo-blob__turn,
+.dynamo-blob-host[data-blob-wobble-paused]:not([data-blob-wobble-paused="false"]) .dynamo-blob__skew,
+.dynamo-blob-host[data-blob-wobble-paused]:not([data-blob-wobble-paused="false"]) .dynamo-blob__scale { animation-play-state: paused; }
 @keyframes dynamo-blob-turn { to { transform: rotate(360deg); } }
 @keyframes dynamo-blob-skew {
   0%   { transform: skewY(0deg); }
@@ -173,6 +176,12 @@ class DynamoBlob extends HTMLElement {
 
     this.play = this.play.bind(this);
     this.pause = this.pause.bind(this);
+    this.playWobble = this.playWobble.bind(this);
+    this.pauseWobble = this.pauseWobble.bind(this);
+    this.playMorph = this.playMorph.bind(this);
+    this.pauseMorph = this.pauseMorph.bind(this);
+    this.playDrift = this.playDrift.bind(this);
+    this.pauseDrift = this.pauseDrift.bind(this);
     this.generateNewBlob = this.generateNewBlob.bind(this);
     this.deflect = this.deflect.bind(this);
     this._onClick = () => this.deflect();
@@ -224,7 +233,7 @@ class DynamoBlob extends HTMLElement {
 
     // Auto-animate the morph loop
     if (this.getAttribute("data-blob-animate") === "true" && !prefersReducedMotion()) {
-      this.play();
+      this.playMorph();
     }
 
     this._connected = true;
@@ -264,13 +273,13 @@ class DynamoBlob extends HTMLElement {
       case "data-blob-speed":
         this._readConfig();
         if (this.isAnimating) {
-          this.pause();
-          this.play();
+          this.pauseMorph();
+          this.playMorph();
         }
         break;
       case "data-blob-animate":
-        if (newValue === "true" && !prefersReducedMotion()) this.play();
-        else this.pause();
+        if (newValue === "true" && !prefersReducedMotion()) this.playMorph();
+        else this.pauseMorph();
         break;
       case "data-blob-drift":
         if (isTruthyAttr(newValue) && !prefersReducedMotion()) {
@@ -288,14 +297,16 @@ class DynamoBlob extends HTMLElement {
         this._applyClick();
         break;
       case "data-blob-paused":
+        // Master freeze: wobble is handled by the [data-blob-paused] CSS rule,
+        // kept independent of data-blob-wobble-paused so they don't clobber.
         if (newValue !== null && newValue !== "false") {
-          this.stopDrift();
-          this.pause();
+          this.pauseMorph();
+          this.pauseDrift();
         } else {
           if (isTruthyAttr(this.getAttribute("data-blob-drift")) && !prefersReducedMotion())
             this.startDrift();
           if (this.getAttribute("data-blob-animate") === "true" && !prefersReducedMotion())
-            this.play();
+            this.playMorph();
         }
         break;
     }
@@ -342,7 +353,7 @@ class DynamoBlob extends HTMLElement {
     const wobbleSpeed = parseFloat(this.getAttribute("data-blob-wobble-speed"));
     this.style.setProperty(
       "--dynamo-blob-time",
-      `${Number.isFinite(wobbleSpeed) ? wobbleSpeed : 30}s`,
+      `${Number.isFinite(wobbleSpeed) ? wobbleSpeed : 30000}ms`,
     );
     const wobbleAmount = parseFloat(this.getAttribute("data-blob-wobble-amount"));
     this.style.setProperty(
@@ -395,7 +406,7 @@ class DynamoBlob extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.pause();
+    this.pauseMorph();
     this.stopDrift();
     this.removeEventListener("click", this._onClick);
     if (this.intersectionObserver) {
@@ -412,8 +423,49 @@ class DynamoBlob extends HTMLElement {
     });
   }
 
+  // --- unified controls ---------------------------------------------------
+  // Resume every animation the blob is configured to run. An options key
+  // *forces* that animation on (and tunes it) regardless of its config flag;
+  // unkeyed animations resume context-aware. Durations are in ms (morph,
+  // wobble); drift takes a speed multiplier. Explicit play ignores
+  // prefers-reduced-motion — that gate only applies to auto-play paths.
+  play(options = {}) {
+    const opts = options || {};
+    if (opts.wobble != null || this.getAttribute("data-blob-wobble") !== "false") {
+      this.playWobble(opts.wobble);
+    }
+    if (opts.morph != null || this.getAttribute("data-blob-animate") === "true") {
+      this.playMorph(opts.morph);
+    }
+    if (opts.drift != null || isTruthyAttr(this.getAttribute("data-blob-drift"))) {
+      this.playDrift(opts.drift);
+    }
+  }
+
+  // Freeze all three animations in place.
+  pause() {
+    this.pauseWobble();
+    this.pauseMorph();
+    this.pauseDrift();
+  }
+
+  // --- wobble (CSS) -------------------------------------------------------
+  // Resume the ambient wobble. An optional period (ms) sets the turn cycle.
+  // Does not override a hard data-blob-wobble="false" disable.
+  playWobble(durationMs) {
+    if (Number.isFinite(durationMs)) {
+      this.style.setProperty("--dynamo-blob-time", `${durationMs}ms`);
+    }
+    this.removeAttribute("data-blob-wobble-paused");
+  }
+
+  // Freeze the wobble at its current position (animation-play-state: paused).
+  pauseWobble() {
+    this.setAttribute("data-blob-wobble-paused", "true");
+  }
+
   // --- morph loop ---------------------------------------------------------
-  play(customDuration = null) {
+  playMorph(customDuration = null) {
     if (this.isAnimating) return;
     this.isAnimating = true;
     const duration = customDuration || this.speed;
@@ -432,13 +484,34 @@ class DynamoBlob extends HTMLElement {
     loop();
   }
 
-  pause() {
+  pauseMorph() {
     if (!this.isAnimating) return;
     this.isAnimating = false;
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     this.animationFrameId = null;
     this.elapsedTime += performance.now() - (this.startTime || performance.now());
     this.startTime = null;
+  }
+
+  // --- drift --------------------------------------------------------------
+  // Resume drift from its current position. An optional speed multiplier
+  // updates driftSpeed (rescaling live velocity when already initialized).
+  playDrift(speed) {
+    if (Number.isFinite(speed)) {
+      const prev = this.driftSpeed;
+      this.driftSpeed = speed;
+      if (this.driftInitialized && prev) {
+        const ratio = this.driftSpeed / prev;
+        this.driftVelX *= ratio;
+        this.driftVelY *= ratio;
+      }
+    }
+    this.startDrift();
+  }
+
+  // Freeze drift in place (keeps position; resumes from here).
+  pauseDrift() {
+    this.stopDrift();
   }
 
   // One-shot regenerate + morph (analogous to a manual shuffle).

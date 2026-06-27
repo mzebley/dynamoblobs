@@ -239,18 +239,21 @@
     </thead>
     <tbody>
         <tr><td><p>data-blob-wobble</p></td><td>true</td><td>true, false</td></tr>
-        <tr><td><p>data-blob-wobble-speed</p></td><td>30</td><td>Period in seconds</td></tr>
+        <tr><td><p>data-blob-wobble-speed</p></td><td>30000</td><td>Period in milliseconds</td></tr>
         <tr><td><p>data-blob-wobble-amount</p></td><td>2</td><td>Skew intensity multiplier</td></tr>
+        <tr><td><p>data-blob-wobble-paused</p></td><td>unset</td><td>Present to freeze the wobble in place</td></tr>
     </tbody>
     </table>
 </div>
 
-<pre><code class="language-html">&lt;dynamo-blob data-blob-wobble-speed="12" data-blob-wobble-amount="3"&gt;&lt;/dynamo-blob&gt;
+<pre><code class="language-html">&lt;dynamo-blob data-blob-wobble-speed="12000" data-blob-wobble-amount="3"&gt;&lt;/dynamo-blob&gt;
 </code></pre>
 <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
-  <dynamo-blob class="fill-theme" data-blob-wobble-speed="10" data-blob-wobble-amount="3" style="width:120px;height:120px"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-wobble-speed="10000" data-blob-wobble-amount="3" style="width:120px;height:120px"></dynamo-blob>
   <dynamo-blob class="fill-theme fill-light" data-blob-wobble="false" style="width:120px;height:120px"></dynamo-blob>
 </div>
+
+<p>Wobble runs on its own pair of methods too — <code>playWobble(<em>ms</em>)</code> and <code>pauseWobble()</code> — or set <code>data-blob-wobble-paused</code> at render to start it frozen but resumable.</p>
 
 <h4 id="blob-animation">Morph Animation</h4>
 
@@ -341,26 +344,35 @@ blob.generateNewBlob(500);
 <p><button style="margin:1rem 0 2rem" onclick="regenBlob('regen-example-blob', 500)"><i data-feather="refresh-cw"></i>New Blob</button></p>
 <h4 id="play">.play()</h4>
 
-<p>Call <strong><code>play(<em>duration</em>)</code></strong> on any blob you'd like to continuously morph between silhouettes. The optional <strong><code>duration</code></strong> sets the length of each morph cycle — default is <strong>7500</strong>(ms).</p>
-<h4 id="pause">.pause()</h4>
-
-<p>To stop the morph loop, call <strong><code>pause()</code></strong> on the blob.</p>
+<p><strong><code>play()</code></strong> resumes every animation the blob is configured to run — the ambient wobble (on by default), the morph loop (when <code>data-blob-animate</code> is set), and drift (when <code>data-blob-drift</code> is set).</p>
+<p>Pass an options object to <strong>force</strong> an animation on and tune its timing. Morph and wobble durations are in <strong>milliseconds</strong>; drift takes a <strong>speed multiplier</strong>.</p>
 <pre><code class="language-javascript">const blob = document.querySelector('dynamo-blob');
 
-function toggleBlobAnimation() {
-  if (blob.isAnimating) {
-    blob.pause();
-  } else {
-    blob.play(5000);
-  }
-}
+blob.play();                                          // resume what's enabled
+blob.play({ morph: 4000 });                           // force morphing on at 4s cycles
+blob.play({ morph: 4000, wobble: 20000, drift: 2 });  // force + tune all three
 </code></pre>
+<h4 id="pause">.pause()</h4>
+
+<p><strong><code>pause()</code></strong> freezes the wobble, the morph loop, and drift in place.</p>
 <div style="display:flex;gap:1.25rem;align-items:center">
   <dynamo-blob class="fill-theme" id="play-example-blob" style="width:120px;height:120px"></dynamo-blob>
 </div>
 
 <p><button style="margin:1rem .5rem 0 0" onclick="play('play-example-blob', 5000)"><i data-feather="play"></i>Play</button>
 <button style="margin-top:1rem" onclick="pause('play-example-blob')"><i data-feather="pause"></i>Pause</button></p>
+<h4 id="granular-controls">Granular controls</h4>
+
+<p>Prefer to drive one layer at a time? Each animation has its own play/pause pair. Durations are in milliseconds; drift takes a speed multiplier.</p>
+<pre><code class="language-javascript">blob.playWobble(20000);  blob.pauseWobble();  // ambient CSS wobble
+blob.playMorph(4000);    blob.pauseMorph();   // morph loop
+blob.playDrift(2);       blob.pauseDrift();   // drift
+
+// Toggle just the morph loop off its own state flag:
+blob.isAnimating ? blob.pauseMorph() : blob.playMorph(5000);
+</code></pre>
+<div class="note"><p><strong>Reduced motion:</strong> explicit <code>play*()</code> calls run regardless of <code>prefers-reduced-motion</code> — only the declarative auto-play attributes honor it.</p></div>
+
 <h4 id="deflect">.deflect()</h4>
 
 <p>For a drifting blob (see <code>data-blob-drift</code>), <strong><code>deflect()</code></strong> kicks it off in a new random direction — the same thing a click does when <code>data-blob-click</code> is set.</p>
@@ -618,7 +630,7 @@ function toggleBlobAnimation() {
   </script>
   <script>
     function regenBlob(id, duration = 800) { document.getElementById(id)?.generateNewBlob(duration); }
-    function play(id, duration = 7500) { document.getElementById(id)?.play(duration); }
+    function play(id, duration = 7500) { document.getElementById(id)?.play({ morph: duration }); }
     function pause(id) { document.getElementById(id)?.pause(); }
     function regenAll() {
       document.querySelectorAll(".blob-hero dynamo-blob").forEach((b) => b.generateNewBlob(700));

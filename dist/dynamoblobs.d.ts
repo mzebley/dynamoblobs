@@ -11,6 +11,15 @@ interface BlobGenerationOptions {
   random?: () => number;
 }
 
+interface BlobPlayOptions {
+  /** Morph-loop cycle duration in milliseconds. */
+  morph?: number;
+  /** Wobble period in milliseconds. */
+  wobble?: number;
+  /** Drift speed multiplier (same scale as data-blob-drift-speed). */
+  drift?: number;
+}
+
 declare class DynamoBlob extends HTMLElement {
   // Morph state
   private isAnimating: boolean;
@@ -45,10 +54,26 @@ declare class DynamoBlob extends HTMLElement {
   disconnectedCallback(): void;
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
 
-  /** Start the continuous morph loop. */
-  play(customDuration?: number | null): void;
-  /** Pause the morph loop. */
+  /**
+   * Resume every animation the blob is configured to run. A key in `options`
+   * forces that animation on (and tunes it) regardless of its config flag;
+   * unkeyed animations resume context-aware. Ignores `prefers-reduced-motion`.
+   */
+  play(options?: BlobPlayOptions): void;
+  /** Freeze wobble, morph, and drift in place. */
   pause(): void;
+  /** Resume the ambient CSS wobble; optional period in milliseconds. */
+  playWobble(durationMs?: number): void;
+  /** Freeze the wobble at its current position. */
+  pauseWobble(): void;
+  /** Start the continuous morph loop; optional per-cycle duration in milliseconds. */
+  playMorph(customDuration?: number | null): void;
+  /** Pause the morph loop. */
+  pauseMorph(): void;
+  /** Resume drift; optional speed multiplier (same scale as data-blob-drift-speed). */
+  playDrift(speed?: number): void;
+  /** Freeze drift in place (keeps position). */
+  pauseDrift(): void;
   /** Regenerate once and morph to the new silhouette. */
   generateNewBlob(duration?: number): void;
   /** Give the drifting blob a random velocity impulse. */
@@ -93,6 +118,7 @@ interface DynamoBlobAttributes {
   'data-blob-wobble'?: string;
   'data-blob-wobble-speed'?: string;
   'data-blob-wobble-amount'?: string;
+  'data-blob-wobble-paused'?: string;
   'data-blob-drift'?: string;
   'data-blob-drift-speed'?: string;
   'data-blob-click'?: string;
@@ -112,4 +138,4 @@ declare global {
 }
 
 export { DynamoBlob, createSeededRandom, decodeBlobSeed, encodeBlobSeed, generateBlobPath, generateBlobPoints, interpolateBlob, parseBlobPath, resampleClosed };
-export type { BlobGenerationOptions, BlobPoint, DynamoBlobAttributes };
+export type { BlobGenerationOptions, BlobPlayOptions, BlobPoint, DynamoBlobAttributes };
