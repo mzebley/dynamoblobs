@@ -128,6 +128,8 @@ Drift translates the element within its nearest **positioned, sized** ancestor (
 
 By default each blob starts drifting from a random spot, which scatters an ambient field nicely. For a single, centered blob, that random jump is jarring — set `data-blob-drift-start="current"` so it continues from where it's already laid out (no teleport), or `"center"` to begin from the container's middle.
 
+Drift bounces off the blob's **visible silhouette**, not the host element's box. Since the silhouette fills only the middle of that box (the rest is transparent headroom for variance + wobble), the blob meets the walls cleanly with no early-bounce gap. The transparent box overhangs the container edges as it does so, so give the drift container `overflow: clip` (or `hidden`).
+
 ## Reduced motion
 
 When `prefers-reduced-motion: reduce` is active, the wobble, the morph loop, and drift all stay still, and `data-blob-animate`/`data-blob-drift` will not auto-play. Explicit JS calls (`play()`, `playWobble()`, etc.) are treated as intentional and run regardless — gate them yourself if you want to respect the preference.

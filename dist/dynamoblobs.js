@@ -618,13 +618,20 @@
         this.driftPosX += this.driftVelX;
         this.driftPosY += this.driftVelY;
         const { w, h, pw, ph } = this.driftBounds();
-        if (this.driftPosX + w > pw || this.driftPosX < 0) {
+        // Let the (mostly transparent) box overhang the walls by its padding so
+        // the *visible* blob is what bounces, not the host box.
+        const { x: insetX, y: insetY } = this.driftInset(w, h);
+        const minX = -insetX;
+        const maxX = pw - w + insetX;
+        const minY = -insetY;
+        const maxY = ph - h + insetY;
+        if (this.driftPosX > maxX || this.driftPosX < minX) {
           this.driftVelX = -this.driftVelX;
-          this.driftPosX = Math.max(0, Math.min(this.driftPosX, pw - w));
+          this.driftPosX = Math.max(minX, Math.min(this.driftPosX, maxX));
         }
-        if (this.driftPosY + h > ph || this.driftPosY < 0) {
+        if (this.driftPosY > maxY || this.driftPosY < minY) {
           this.driftVelY = -this.driftVelY;
-          this.driftPosY = Math.max(0, Math.min(this.driftPosY, ph - h));
+          this.driftPosY = Math.max(minY, Math.min(this.driftPosY, maxY));
         }
         this.style.transform = `translate3d(${this.driftPosX}px, ${this.driftPosY}px, 0)`;
         this.driftFrameId = requestAnimationFrame(step);
@@ -664,6 +671,15 @@
         pw: parent ? parent.offsetWidth || parent.clientWidth : 0,
         ph: parent ? parent.offsetHeight || parent.clientHeight : 0,
       };
+    }
+
+    // Drift bounces off the blob's visible extent, not the host box. The
+    // silhouette spans ~BASE_RADIUS ± variance/2 inside a VIEW box, so this much
+    // of each side is transparent padding we let overhang the walls. Returns px.
+    driftInset(w, h) {
+      const radius = BASE_RADIUS + (this.variance || 0) / 2;
+      const padFraction = Math.max(0, (CENTER - radius) / VIEW);
+      return { x: padFraction * w, y: padFraction * h };
     }
 
     stopDrift() {

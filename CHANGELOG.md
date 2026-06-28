@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-06-27
+
+### Changed
+- Drift now bounces off the blob's visible silhouette instead of the host
+  element's box, so a blob meets the walls instead of reversing early across its
+  transparent padding. The inset is derived from the blob geometry
+  (`BASE_RADIUS ± variance/2`), so it adapts as `data-blob-variance` changes and
+  needs no per-frame `getBBox()`. The transparent box overhangs the container as
+  it does so — drift containers should clip overflow.
+
 ## [1.3.0] - 2026-06-27
 
 ### Added
