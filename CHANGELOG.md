@@ -4,6 +4,33 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-06-28
+
+### Changed
+- **Motion attributes redesigned around a single convention.** Each of the three
+  layers — wobble, morph, drift — now exposes `data-blob-<layer>-autoplay`,
+  `data-blob-is-<layer>ing`, `data-blob-<layer>-speed`, and
+  `data-blob-<layer>-intensity`. The layers are always available; you control only
+  whether each auto-plays and play/pause it live.
+- `data-blob-is-wobbling` / `-is-morphing` / `-is-drifting` are two-way: set them to
+  pause/play, and they reflect the live state. `data-blob-is-animating` is the master
+  freeze/resume. All four are mirrored to `.isWobbling`, `.isMorphing`, `.isDrifting`,
+  and `.isAnimating`.
+- `prefers-reduced-motion` now suppresses auto-play only (via the `*-autoplay` flags);
+  explicit `is-*` attributes and JS `play*()` calls run regardless.
+
+### Added
+- `data-blob-morph-intensity` — holds the per-cycle reshape magnitude constant, so the
+  morph loop stays reliably dramatic at higher values instead of occasionally landing on
+  a near-identical shape.
+- `data-blob-drift-intensity` — bounce restitution at the walls (`1` elastic, `<1`
+  damps, `>1` energizes, with a max-speed clamp).
+- `nextMorphShape()` is exported alongside the other pure generators.
+
+### Notes
+- This is a proof-of-concept release with no backwards-compatibility shims for the
+  renamed attributes.
+
 ## [1.4.1] - 2026-06-27
 
 ### Changed

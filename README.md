@@ -7,9 +7,10 @@ Lightweight, dependency-free generative SVG blobs that generate a fresh silhouet
 ## Features
 - **Drop-in custom element** – place `<dynamo-blob>` anywhere; classes, styles, and IDs flow through, and the path inherits your `fill`.
 - **Deterministic or generative** – seed a blob for a reproducible shape, or let it randomize and regenerate via Intersection Observer triggers.
-- **Three layers of motion** – an always-on CSS wobble (turn / skew / scale), an optional JS morph loop that interpolates between silhouettes, and an optional "DVD"-style drift with click-to-deflect.
-- **Runtime controls** – unified `play`/`pause` plus granular `playWobble`/`pauseWobble`, `playMorph`/`pauseMorph`, `playDrift`/`pauseDrift`, alongside `generateNewBlob`, `deflect`, a `dynamo-blob-complete` event, and TypeScript definitions.
-- **Animation aware** – honors `prefers-reduced-motion` and tears down loops/observers when the element leaves the DOM.
+- **Three motion layers** – **wobble** (CSS turn / skew / scale), **morph** (a JS loop that interpolates between silhouettes), and **drift** (a "DVD"-style bounce with click-to-deflect). Each layer is always available — you choose whether it auto-plays and can play/pause it live.
+- **Consistent naming** – every layer follows the same shape: `data-blob-<layer>-autoplay`, `data-blob-is-<layer>ing`, `data-blob-<layer>-speed`, `data-blob-<layer>-intensity`.
+- **Runtime controls** – unified `play`/`pause`, granular `playWobble`/`pauseWobble`, `playMorph`/`pauseMorph`, `playDrift`/`pauseDrift`, plus `generateNewBlob`, `deflect`, a `dynamo-blob-complete` event, and live `.isWobbling` / `.isMorphing` / `.isDrifting` / `.isAnimating` state. TypeScript definitions included.
+- **Motion aware** – `prefers-reduced-motion` suppresses auto-play, and loops/observers tear down when the element leaves the DOM.
 
 ## Installation
 
@@ -57,26 +58,54 @@ import 'dynamoblobs';
 
 ## Data attributes
 
+All three motion layers share one naming pattern: `data-blob-<layer>-autoplay` (start on render), `data-blob-is-<layer>ing` (live play/pause + state readout), `data-blob-<layer>-speed`, and `data-blob-<layer>-intensity`.
+
+### Shape
+
 | Attribute | Default | Description |
 | --- | --- | --- |
 | `data-blob-points` | `10` | Vertex count — higher is busier. Minimum 3. |
 | `data-blob-variance` | `8` | Radius deviation — higher is lumpier. |
 | `data-blob-seed` | _unset_ | A base64 path reproduces an exact shape; any other string deterministically seeds generation. |
-| `data-blob-morph` | `600` | Tween duration (ms) when a shape attribute changes live. `0` snaps. |
-| `data-blob-animate` | `false` | Auto-run the morph loop on render (skipped under reduced motion). |
-| `data-blob-speed` | `7500` | Morph-loop duration in milliseconds. |
 | `data-blob-observe` | _unset_ | Regenerate as the element enters/leaves the viewport: `once:0px` or `continuous:64px`. |
-| `data-blob-wobble` | `true` | Ambient CSS wobble (turn / skew / scale). Set `false` to disable. |
-| `data-blob-wobble-speed` | `30000` | Wobble period in milliseconds. |
-| `data-blob-wobble-amount` | `2` | Wobble skew intensity multiplier. |
-| `data-blob-wobble-paused` | _unset_ | Freeze the wobble in place. Set at render to start wobble stopped (still resumable via `playWobble()`). |
-| `data-blob-drift` | `false` | Drift around the nearest positioned ancestor, bouncing off the walls. |
-| `data-blob-drift-speed` | `1.25` | Drift velocity. |
-| `data-blob-drift-start` | `random` | Where drift begins: `random` (scattered), `center`, or `current` (continues from the element's laid-out position — no teleport). |
-| `data-blob-click` | `false` | Deflect to a new direction on click (requires drift). |
-| `data-blob-paused` | _unset_ | When present, freezes wobble, drift, and the morph loop in place. Remove to resume. |
 
-**Attributes are reactive.** Change any of them after render and the element re-tunes in place — shape changes morph over `data-blob-morph`, and motion toggles (drift, animate, paused) apply live. This makes `<dynamo-blob>` a natural fit for framework bindings.
+### Wobble — ambient CSS turn / skew / scale
+
+| Attribute | Default | Description |
+| --- | --- | --- |
+| `data-blob-wobble-autoplay` | `true` | Start wobbling on render (suppressed under reduced motion). |
+| `data-blob-is-wobbling` | reflects state | Set `false` to pause, `true` to play. Mirrors `.isWobbling`. |
+| `data-blob-wobble-speed` | `30000` | Wobble period in milliseconds. |
+| `data-blob-wobble-intensity` | `2` | Skew intensity multiplier. |
+
+### Morph — JS loop between silhouettes
+
+| Attribute | Default | Description |
+| --- | --- | --- |
+| `data-blob-morph-autoplay` | `false` | Start the morph loop on render (suppressed under reduced motion). |
+| `data-blob-is-morphing` | reflects state | Set `false` to pause, `true` to play. Mirrors `.isMorphing`. |
+| `data-blob-morph-speed` | `7500` | Per-cycle morph duration in milliseconds. |
+| `data-blob-morph-intensity` | `1` | How far each cycle reshapes the blob. The magnitude is held constant cycle-to-cycle, so higher values stay reliably dramatic. |
+| `data-blob-morph-tween` | `600` | Tween duration (ms) when a shape attribute changes live. `0` snaps. |
+
+### Drift — "DVD"-style bounce
+
+| Attribute | Default | Description |
+| --- | --- | --- |
+| `data-blob-drift-autoplay` | `false` | Start drifting on render (suppressed under reduced motion). |
+| `data-blob-is-drifting` | reflects state | Set `false` to pause in place, `true` to play. Mirrors `.isDrifting`. |
+| `data-blob-drift-speed` | `1.25` | Drift velocity. |
+| `data-blob-drift-intensity` | `1` | Bounce restitution at the walls: `1` is perfectly elastic, `<1` damps, `>1` energizes. |
+| `data-blob-drift-click` | `false` | Deflect to a new direction on click. |
+| `data-blob-drift-start-position` | `random` | Where drift begins: `random` (scattered), `center`, or `current` (continues from the element's laid-out position — no teleport). |
+
+### Master
+
+| Attribute | Default | Description |
+| --- | --- | --- |
+| `data-blob-is-animating` | reflects state | Set `false` to freeze all three layers in place; `true` to resume the auto-play layers. Auto-set to `true` whenever any layer starts. Mirrors `.isAnimating`. |
+
+**Attributes are reactive.** Change any of them after render and the element re-tunes in place — shape changes morph over `data-blob-morph-tween`, and the play/pause and intensity controls apply live. This makes `<dynamo-blob>` a natural fit for framework bindings.
 
 ## JavaScript API
 
@@ -85,9 +114,9 @@ const blob = document.querySelector('dynamo-blob')!;
 
 // Unified controls
 blob.pause();             // freeze wobble, morph, and drift in place
-blob.play();              // resume every animation the blob is configured to run
+blob.play();              // resume every layer the blob is configured to auto-play
 blob.play({ morph: 4000, wobble: 20000, drift: 2 });
-//   a key forces that animation on and tunes it — morph/wobble in ms, drift = speed multiplier
+//   a key forces that layer on and tunes it — morph/wobble in ms, drift = speed multiplier
 
 // Granular controls
 blob.playWobble(20000);   // resume the CSS wobble (optional period in ms)
@@ -99,9 +128,15 @@ blob.pauseDrift();        // freeze drift in place
 
 blob.generateNewBlob();   // one-shot morph to a fresh silhouette
 blob.deflect();           // nudge a drifting blob in a new direction
+
+// Live state (also mirrored to data-blob-is-* attributes)
+blob.isWobbling;          // boolean
+blob.isMorphing;          // boolean
+blob.isDrifting;          // boolean
+blob.isAnimating;         // boolean — true when any layer is playing
 ```
 
-`play()` resumes only the animations the blob is configured for (wobble unless `data-blob-wobble="false"`, morph when `data-blob-animate="true"`, drift when `data-blob-drift` is set). Passing a key in the options object forces that animation on regardless. Explicit play methods ignore `prefers-reduced-motion`; the declarative auto-play paths still honor it.
+`play()` resumes the layers the blob is configured to auto-play (`data-blob-wobble-autoplay`, `data-blob-morph-autoplay`, `data-blob-drift-autoplay`). Passing a key in the options object forces that layer on regardless. Explicit play methods ignore `prefers-reduced-motion`; the declarative auto-play paths still honor it.
 
 The pure generators are exported too, for SSR, canvas, or custom pipelines:
 
@@ -126,13 +161,13 @@ import {
 
 Drift translates the element within its nearest **positioned, sized** ancestor (`position: relative` with explicit dimensions). Multiple drifting blobs in one container create the layered, ambient background effect.
 
-By default each blob starts drifting from a random spot, which scatters an ambient field nicely. For a single, centered blob, that random jump is jarring — set `data-blob-drift-start="current"` so it continues from where it's already laid out (no teleport), or `"center"` to begin from the container's middle.
+By default each blob starts drifting from a random spot, which scatters an ambient field nicely. For a single, centered blob, that random jump is jarring — set `data-blob-drift-start-position="current"` so it continues from where it's already laid out (no teleport), or `"center"` to begin from the container's middle.
 
 Drift bounces off the blob's **visible silhouette**, not the host element's box. Since the silhouette fills only the middle of that box (the rest is transparent headroom for variance + wobble), the blob meets the walls cleanly with no early-bounce gap. The transparent box overhangs the container edges as it does so, so give the drift container `overflow: clip` (or `hidden`).
 
 ## Reduced motion
 
-When `prefers-reduced-motion: reduce` is active, the wobble, the morph loop, and drift all stay still, and `data-blob-animate`/`data-blob-drift` will not auto-play. Explicit JS calls (`play()`, `playWobble()`, etc.) are treated as intentional and run regardless — gate them yourself if you want to respect the preference.
+When `prefers-reduced-motion: reduce` is active, none of the three layers auto-play on render — the `*-autoplay` flags are suppressed. Explicit JS calls (`play()`, `playWobble()`, etc.) and explicit `data-blob-is-*` attributes are treated as intentional and run regardless — gate them yourself if you want to respect the preference.
 
 ## License
 

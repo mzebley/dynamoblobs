@@ -29,9 +29,9 @@ blob.generateNewBlob(500);
 
 <h4 id="play">.play()</h4>
 
-**<code>play()</code>** resumes every animation the blob is configured to run — the ambient wobble (on by default), the morph loop (when <code>data-blob-animate</code> is set), and drift (when <code>data-blob-drift</code> is set).
+**<code>play()</code>** resumes every layer the blob is configured to auto-play — wobble (on by default), the morph loop (when <code>data-blob-morph-autoplay</code> is set), and drift (when <code>data-blob-drift-autoplay</code> is set).
 
-Pass an options object to **force** an animation on and tune its timing. Morph and wobble durations are in **milliseconds**; drift takes a **speed multiplier**.
+Pass an options object to **force** a layer on and tune its timing. Morph and wobble durations are in **milliseconds**; drift takes a **speed multiplier**.
 
 ```javascript
 const blob = document.querySelector('dynamo-blob');
@@ -61,15 +61,19 @@ blob.playWobble(20000);  blob.pauseWobble();  // ambient CSS wobble
 blob.playMorph(4000);    blob.pauseMorph();   // morph loop
 blob.playDrift(2);       blob.pauseDrift();   // drift
 
-// Toggle just the morph loop off its own state flag:
-blob.isAnimating ? blob.pauseMorph() : blob.playMorph(5000);
+// Each layer exposes its live state (also mirrored to data-blob-is-* attributes):
+blob.isWobbling;  blob.isMorphing;  blob.isDrifting;
+blob.isAnimating; // true when any layer is playing
+
+// Toggle just the morph loop off its own state:
+blob.isMorphing ? blob.pauseMorph() : blob.playMorph(5000);
 ```
 
-<div class="note"><p><strong>Reduced motion:</strong> explicit <code>play*()</code> calls run regardless of <code>prefers-reduced-motion</code> — only the declarative auto-play attributes honor it.</p></div>
+<div class="note"><p><strong>Reduced motion:</strong> explicit <code>play*()</code> calls run regardless of <code>prefers-reduced-motion</code> — only the declarative <code>*-autoplay</code> attributes honor it.</p></div>
 
 <h4 id="deflect">.deflect()</h4>
 
-For a drifting blob (see <code>data-blob-drift</code>), **<code>deflect()</code>** kicks it off in a new random direction — the same thing a click does when <code>data-blob-click</code> is set.
+For a drifting blob (see <code>data-blob-drift-autoplay</code>), **<code>deflect()</code>** kicks it off in a new random direction — the same thing a click does when <code>data-blob-drift-click</code> is set.
 
 <div class="note"><p><strong>Need to know when a morph finishes?</strong> Listen for the <code>dynamo-blob-complete</code> event to react when a cycle ends.</p></div>
 

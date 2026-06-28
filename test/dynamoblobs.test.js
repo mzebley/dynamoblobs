@@ -18,6 +18,7 @@ typeof globalThis.customElements === 'undefined' &&
 
 let generateBlobPath;
 let generateBlobPoints;
+let nextMorphShape;
 let parseBlobPath;
 let interpolateBlob;
 let resampleClosed;
@@ -29,6 +30,7 @@ before(async () => {
   ({
     generateBlobPath,
     generateBlobPoints,
+    nextMorphShape,
     parseBlobPath,
     interpolateBlob,
     resampleClosed,
@@ -114,6 +116,45 @@ describe('interpolateBlob', () => {
     const path = interpolateBlob(from, to, 0.5);
     // 12 Q-commands at the target resolution.
     assert.equal(parseBlobPath(path).length, 12);
+  });
+});
+
+describe('nextMorphShape', () => {
+  const CENTER = 50;
+  const radiiOf = (path) =>
+    parseBlobPath(path).map((p) => Math.hypot(p.x - CENTER, p.y - CENTER));
+  const meanDelta = (a, b) =>
+    a.reduce((s, r, i) => s + Math.abs(r - b[i]), 0) / a.length;
+
+  it('preserves the vertex count of the base shape', () => {
+    const base = generateBlobPath({ points: 9, variance: 8, random: createSeededRandom('base') });
+    const next = nextMorphShape(base, { variance: 8, intensity: 1, random: createSeededRandom('d') });
+    assert.equal(parseBlobPath(next).length, 9);
+  });
+
+  it('produces a valid closed path', () => {
+    const base = generateBlobPath({ points: 7, variance: 8, random: createSeededRandom('base') });
+    const next = nextMorphShape(base, { variance: 8, intensity: 0.5, random: () => 0.5 });
+    assert.ok(next.startsWith('M '));
+    assert.ok(next.trimEnd().endsWith('Z'));
+  });
+
+  it('moves the shape more at higher intensity (consistent magnitude)', () => {
+    const base = generateBlobPath({ points: 8, variance: 10, random: createSeededRandom('base') });
+    const baseR = radiiOf(base);
+    // Same RNG sequence for both, so only intensity differs.
+    const low = nextMorphShape(base, { variance: 10, intensity: 0.1, random: createSeededRandom('dir') });
+    const high = nextMorphShape(base, { variance: 10, intensity: 0.6, random: createSeededRandom('dir') });
+    assert.ok(meanDelta(radiiOf(high), baseR) > meanDelta(radiiOf(low), baseR));
+  });
+
+  it('keeps radii within the variance band (clamped)', () => {
+    const base = generateBlobPath({ points: 12, variance: 8, random: createSeededRandom('base') });
+    // Extreme intensity would overshoot without clamping.
+    const next = nextMorphShape(base, { variance: 8, intensity: 5, random: createSeededRandom('dir') });
+    for (const r of radiiOf(next)) {
+      assert.ok(r >= 30 - 8 - 1e-6 && r <= 30 + 8 + 1e-6);
+    }
   });
 });
 

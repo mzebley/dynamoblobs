@@ -1,6 +1,6 @@
 {
   "name": "dynamoblobs",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "type": "module",
   "description": "Lightweight, dependency-free generative SVG blobs that wobble, morph, and drift — delivered as a drop-in custom element.",
   "main": "dist/dynamoblobs.js",
@@ -45,6 +45,7 @@
     "@mzebley/mark-down-cli": "^1.2.2",
     "@rollup/plugin-terser": "^0.4.4",
     "chokidar-cli": "^3.0.0",
+    "jsdom": "^29.1.1",
     "rollup": "^3.29.4",
     "rollup-plugin-dts": "^6.1.1"
   },

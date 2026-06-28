@@ -11,6 +11,15 @@ interface BlobGenerationOptions {
   random?: () => number;
 }
 
+interface NextMorphShapeOptions {
+  /** Radius deviation in internal units. */
+  variance: number;
+  /** Magnitude factor — fraction of variance moved (RMS) per cycle. */
+  intensity: number;
+  /** RNG (defaults to Math.random). */
+  random?: () => number;
+}
+
 interface BlobPlayOptions {
   /** Morph-loop cycle duration in milliseconds. */
   morph?: number;
@@ -22,7 +31,7 @@ interface BlobPlayOptions {
 
 declare class DynamoBlob extends HTMLElement {
   // Morph state
-  private isAnimating: boolean;
+  private _morphing: boolean;
   private animationFrameId: number | null;
   private elapsedTime: number;
   private startTime: number | null;
@@ -30,6 +39,9 @@ declare class DynamoBlob extends HTMLElement {
   private currentPath: string | null;
   private targetPath: string | null;
   private pendingPath: string | null;
+
+  // Wobble state
+  private _wobbling: boolean;
 
   // Drift state
   private driftFrameId: number | null;
@@ -44,10 +56,23 @@ declare class DynamoBlob extends HTMLElement {
   private points: number;
   private variance: number;
   private speed: number;
+  private morphMs: number;
+  private morphIntensity: number;
+  private driftSpeed: number;
+  private driftIntensity: number;
   private svg: SVGSVGElement;
   private path: SVGPathElement;
 
   constructor();
+
+  /** True while the ambient wobble is playing. Mirrors data-blob-is-wobbling. */
+  readonly isWobbling: boolean;
+  /** True while the morph loop is playing. Mirrors data-blob-is-morphing. */
+  readonly isMorphing: boolean;
+  /** True while drift is playing. Mirrors data-blob-is-drifting. */
+  readonly isDrifting: boolean;
+  /** True when any layer is playing. Mirrors data-blob-is-animating. */
+  readonly isAnimating: boolean;
 
   static readonly observedAttributes: string[];
   connectedCallback(): void;
@@ -55,9 +80,9 @@ declare class DynamoBlob extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
 
   /**
-   * Resume every animation the blob is configured to run. A key in `options`
-   * forces that animation on (and tunes it) regardless of its config flag;
-   * unkeyed animations resume context-aware. Ignores `prefers-reduced-motion`.
+   * Resume the layers the blob is configured to auto-play. A key in `options`
+   * forces that layer on (and tunes it) regardless of its auto-play flag.
+   * Ignores `prefers-reduced-motion`.
    */
   play(options?: BlobPlayOptions): void;
   /** Freeze wobble, morph, and drift in place. */
@@ -80,6 +105,7 @@ declare class DynamoBlob extends HTMLElement {
   deflect(): void;
 
   private generatePathString(): string;
+  private nextMorphTarget(fromPath: string): string;
   private animateBlob(duration: number, onComplete?: (() => void) | null): void;
   private updateSeedAttribute(pathString: string): void;
   private setupIntersectionObserver(observeConfig: string): void;
@@ -95,6 +121,7 @@ declare function generateBlobPoints(
   variance: number,
   random?: () => number,
 ): BlobPoint[];
+declare function nextMorphShape(fromPath: string, options: NextMorphShapeOptions): string;
 declare function parseBlobPath(pathString: string): BlobPoint[];
 declare function interpolateBlob(
   currentPoints: BlobPoint[],
@@ -108,22 +135,35 @@ declare function decodeBlobSeed(seed: string): string | null;
 
 // Component attributes interface
 interface DynamoBlobAttributes {
+  // Shape
   'data-blob-points'?: string;
   'data-blob-variance'?: string;
   'data-blob-seed'?: string;
-  'data-blob-morph'?: string;
-  'data-blob-animate'?: string;
-  'data-blob-speed'?: string;
   'data-blob-observe'?: string;
-  'data-blob-wobble'?: string;
+
+  // Wobble
+  'data-blob-wobble-autoplay'?: string;
+  'data-blob-is-wobbling'?: string;
   'data-blob-wobble-speed'?: string;
-  'data-blob-wobble-amount'?: string;
-  'data-blob-wobble-paused'?: string;
-  'data-blob-drift'?: string;
+  'data-blob-wobble-intensity'?: string;
+
+  // Morph
+  'data-blob-morph-autoplay'?: string;
+  'data-blob-is-morphing'?: string;
+  'data-blob-morph-speed'?: string;
+  'data-blob-morph-intensity'?: string;
+  'data-blob-morph-tween'?: string;
+
+  // Drift
+  'data-blob-drift-autoplay'?: string;
+  'data-blob-is-drifting'?: string;
   'data-blob-drift-speed'?: string;
-  'data-blob-drift-start'?: 'random' | 'center' | 'current';
-  'data-blob-click'?: string;
-  'data-blob-paused'?: string;
+  'data-blob-drift-intensity'?: string;
+  'data-blob-drift-click'?: string;
+  'data-blob-drift-start-position'?: 'random' | 'center' | 'current';
+
+  // Master
+  'data-blob-is-animating'?: string;
 }
 
 declare global {
@@ -138,5 +178,5 @@ declare global {
   }
 }
 
-export { DynamoBlob, createSeededRandom, decodeBlobSeed, encodeBlobSeed, generateBlobPath, generateBlobPoints, interpolateBlob, parseBlobPath, resampleClosed };
-export type { BlobGenerationOptions, BlobPlayOptions, BlobPoint, DynamoBlobAttributes };
+export { DynamoBlob, createSeededRandom, decodeBlobSeed, encodeBlobSeed, generateBlobPath, generateBlobPoints, interpolateBlob, nextMorphShape, parseBlobPath, resampleClosed };
+export type { BlobGenerationOptions, BlobPlayOptions, BlobPoint, DynamoBlobAttributes, NextMorphShapeOptions };

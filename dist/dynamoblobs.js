@@ -6,14 +6,20 @@
 
   // dynamoblobs — dependency-free generative SVG blobs as a custom element.
   //
-  // <dynamo-blob> renders a closed, organic SVG path that:
-  //   • generates a fresh silhouette every render (seedable for reproducibility),
-  //   • wobbles continuously via CSS (turn / skew / scale),
-  //   • can morph between silhouettes on a loop via JS path interpolation,
-  //   • can drift around a positioned parent ("DVD"-style) and deflect on click.
+  // <dynamo-blob> renders a closed, organic SVG path with three independent,
+  // always-available motion layers:
+  //   • wobble — a continuous CSS turn / skew / scale,
+  //   • morph  — a JS path-interpolation loop between silhouettes,
+  //   • drift  — a "DVD"-style bounce around a positioned parent, deflectable on click.
+  //
+  // Each layer is "always ready": you control whether it auto-plays on render
+  // (data-blob-<layer>-autoplay) and play/pause it live (data-blob-is-<layer>ing,
+  // mirrored to .isWobbling / .isMorphing / .isDrifting). data-blob-is-animating
+  // (.isAnimating) is the master: false freezes everything, true resumes the
+  // auto-play layers. prefers-reduced-motion suppresses auto-play only.
   //
   // It lives in the light DOM, inherits `fill` from your CSS, is `aria-hidden`,
-  // honors `prefers-reduced-motion`, and is SSR-safe (everything DOM-y is guarded).
+  // and is SSR-safe (everything DOM-y is guarded).
 
   // ---------------------------------------------------------------------------
   // Internal geometry. The blob is drawn in a fixed coordinate space and scaled
@@ -32,8 +38,8 @@
   overflow: visible;
   pointer-events: none;
 }
-.dynamo-blob-host[data-blob-clickable] { pointer-events: auto; cursor: pointer; }
-.dynamo-blob-host[data-blob-drifting] {
+.dynamo-blob-host.dynamo-blob--clickable { pointer-events: auto; cursor: pointer; }
+.dynamo-blob-host.dynamo-blob--drift {
   position: absolute;
   top: 0;
   left: 0;
@@ -64,33 +70,30 @@
   animation: dynamo-blob-scale calc(var(--dynamo-blob-time, 30000ms) * 0.5) ease-in-out infinite;
 }
 .dynamo-blob__path { fill: inherit; }
-.dynamo-blob-host[data-blob-wobble="false"] .dynamo-blob__turn,
-.dynamo-blob-host[data-blob-wobble="false"] .dynamo-blob__skew,
-.dynamo-blob-host[data-blob-wobble="false"] .dynamo-blob__scale { animation: none; }
-.dynamo-blob-host[data-blob-paused] .dynamo-blob__turn,
-.dynamo-blob-host[data-blob-paused] .dynamo-blob__skew,
-.dynamo-blob-host[data-blob-paused] .dynamo-blob__scale { animation-play-state: paused; }
-.dynamo-blob-host[data-blob-wobble-paused]:not([data-blob-wobble-paused="false"]) .dynamo-blob__turn,
-.dynamo-blob-host[data-blob-wobble-paused]:not([data-blob-wobble-paused="false"]) .dynamo-blob__skew,
-.dynamo-blob-host[data-blob-wobble-paused]:not([data-blob-wobble-paused="false"]) .dynamo-blob__scale { animation-play-state: paused; }
+.dynamo-blob-host[data-blob-is-wobbling="false"] .dynamo-blob__turn,
+.dynamo-blob-host[data-blob-is-wobbling="false"] .dynamo-blob__skew,
+.dynamo-blob-host[data-blob-is-wobbling="false"] .dynamo-blob__scale,
+.dynamo-blob-host[data-blob-is-animating="false"] .dynamo-blob__turn,
+.dynamo-blob-host[data-blob-is-animating="false"] .dynamo-blob__skew,
+.dynamo-blob-host[data-blob-is-animating="false"] .dynamo-blob__scale { animation-play-state: paused; }
 @keyframes dynamo-blob-turn { to { transform: rotate(360deg); } }
 @keyframes dynamo-blob-skew {
   0%   { transform: skewY(0deg); }
-  13%  { transform: skewY(calc(1.8deg * var(--dynamo-blob-amount, 2))); }
-  18%  { transform: skewY(calc(2.2deg * var(--dynamo-blob-amount, 2))); }
-  24%  { transform: skewY(calc(2.48deg * var(--dynamo-blob-amount, 2))); }
-  25%  { transform: skewY(calc(2.5deg * var(--dynamo-blob-amount, 2))); }
-  26%  { transform: skewY(calc(2.48deg * var(--dynamo-blob-amount, 2))); }
-  32%  { transform: skewY(calc(2.2deg * var(--dynamo-blob-amount, 2))); }
-  37%  { transform: skewY(calc(1.8deg * var(--dynamo-blob-amount, 2))); }
+  13%  { transform: skewY(calc(1.8deg * var(--dynamo-blob-intensity, 2))); }
+  18%  { transform: skewY(calc(2.2deg * var(--dynamo-blob-intensity, 2))); }
+  24%  { transform: skewY(calc(2.48deg * var(--dynamo-blob-intensity, 2))); }
+  25%  { transform: skewY(calc(2.5deg * var(--dynamo-blob-intensity, 2))); }
+  26%  { transform: skewY(calc(2.48deg * var(--dynamo-blob-intensity, 2))); }
+  32%  { transform: skewY(calc(2.2deg * var(--dynamo-blob-intensity, 2))); }
+  37%  { transform: skewY(calc(1.8deg * var(--dynamo-blob-intensity, 2))); }
   50%  { transform: skewY(0deg); }
-  63%  { transform: skewY(calc(-1.8deg * var(--dynamo-blob-amount, 2))); }
-  68%  { transform: skewY(calc(-2.2deg * var(--dynamo-blob-amount, 2))); }
-  74%  { transform: skewY(calc(-2.48deg * var(--dynamo-blob-amount, 2))); }
-  75%  { transform: skewY(calc(-2.5deg * var(--dynamo-blob-amount, 2))); }
-  76%  { transform: skewY(calc(-2.48deg * var(--dynamo-blob-amount, 2))); }
-  82%  { transform: skewY(calc(-2.2deg * var(--dynamo-blob-amount, 2))); }
-  87%  { transform: skewY(calc(-1.8deg * var(--dynamo-blob-amount, 2))); }
+  63%  { transform: skewY(calc(-1.8deg * var(--dynamo-blob-intensity, 2))); }
+  68%  { transform: skewY(calc(-2.2deg * var(--dynamo-blob-intensity, 2))); }
+  74%  { transform: skewY(calc(-2.48deg * var(--dynamo-blob-intensity, 2))); }
+  75%  { transform: skewY(calc(-2.5deg * var(--dynamo-blob-intensity, 2))); }
+  76%  { transform: skewY(calc(-2.48deg * var(--dynamo-blob-intensity, 2))); }
+  82%  { transform: skewY(calc(-2.2deg * var(--dynamo-blob-intensity, 2))); }
+  87%  { transform: skewY(calc(-1.8deg * var(--dynamo-blob-intensity, 2))); }
   100% { transform: skewY(0deg); }
 }
 @keyframes dynamo-blob-scale {
@@ -99,11 +102,6 @@
   50%  { transform: scaleX(1) scaleY(0.9); }
   75%  { transform: scaleX(0.9) scaleY(0.9); }
   100% { transform: scaleX(0.9) scaleY(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dynamo-blob__turn,
-  .dynamo-blob__skew,
-  .dynamo-blob__scale { animation: none; }
 }
 `;
 
@@ -124,28 +122,28 @@
     );
   }
 
-  function isTruthyAttr(value) {
-    return (
-      typeof value === "string" &&
-      ["", "true", "1", "yes", "on"].includes(value.trim().toLowerCase())
-    );
-  }
-
   class DynamoBlob extends HTMLElement {
     static get observedAttributes() {
       return [
         "data-blob-points",
         "data-blob-variance",
         "data-blob-seed",
-        "data-blob-morph",
-        "data-blob-speed",
-        "data-blob-animate",
+        "data-blob-morph-tween",
+        "data-blob-morph-speed",
+        "data-blob-morph-intensity",
+        "data-blob-morph-autoplay",
+        "data-blob-is-morphing",
         "data-blob-wobble-speed",
-        "data-blob-wobble-amount",
-        "data-blob-drift",
+        "data-blob-wobble-intensity",
+        "data-blob-wobble-autoplay",
+        "data-blob-is-wobbling",
         "data-blob-drift-speed",
-        "data-blob-click",
-        "data-blob-paused",
+        "data-blob-drift-intensity",
+        "data-blob-drift-autoplay",
+        "data-blob-drift-click",
+        "data-blob-drift-start-position",
+        "data-blob-is-drifting",
+        "data-blob-is-animating",
       ];
     }
 
@@ -153,7 +151,7 @@
       super();
 
       // Morph state
-      this.isAnimating = false;
+      this._morphing = false;
       this.animationFrameId = null;
       this.elapsedTime = 0;
       this.startTime = null;
@@ -161,6 +159,9 @@
       this.currentPath = null;
       this.targetPath = null;
       this.pendingPath = null;
+
+      // Wobble state (CSS-driven; this is the intended play/pause).
+      this._wobbling = false;
 
       // Drift state
       this.driftFrameId = null;
@@ -176,11 +177,17 @@
       this.random = Math.random;
       this.seedString = null;
       this.driftSpeed = 1.25;
+      this.driftIntensity = 1;
       this.morphMs = 600;
+      this.morphIntensity = 1;
       this._connected = false;
       this._hasUserSeed = false;
       this._writingSeed = null;
       this._seedPath = null;
+
+      // Names we're mid-writing to the DOM as state reflection — ignore the
+      // resulting attributeChangedCallback so the two-way attributes don't loop.
+      this._writingState = new Set();
 
       this.play = this.play.bind(this);
       this.pause = this.pause.bind(this);
@@ -193,6 +200,21 @@
       this.generateNewBlob = this.generateNewBlob.bind(this);
       this.deflect = this.deflect.bind(this);
       this._onClick = () => this.deflect();
+    }
+
+    // --- live state, mirrored to data-blob-is-* attributes ------------------
+    get isWobbling() {
+      return this._wobbling;
+    }
+    get isMorphing() {
+      return this._morphing;
+    }
+    get isDrifting() {
+      return this.driftFrameId != null;
+    }
+    /** True when any of the three layers is currently playing. */
+    get isAnimating() {
+      return this.isWobbling || this.isMorphing || this.isDrifting;
     }
 
     connectedCallback() {
@@ -234,21 +256,55 @@
       const observeAttr = this.getAttribute("data-blob-observe");
       if (observeAttr) this.setupIntersectionObserver(observeAttr);
 
-      // Drift
-      if (isTruthyAttr(this.getAttribute("data-blob-drift")) && !prefersReducedMotion()) {
+      // Decide each layer's initial play state. An explicit data-blob-is-<layer>ing
+      // wins; otherwise the layer auto-plays per its -autoplay flag, unless the
+      // master is off or reduced motion is requested.
+      const masterOff = this.getAttribute("data-blob-is-animating") === "false";
+      const reduce = prefersReducedMotion();
+
+      this._wobbling = this._initialLayerState(
+        "data-blob-is-wobbling",
+        "data-blob-wobble-autoplay",
+        true,
+        masterOff,
+        reduce,
+      );
+      if (
+        this._initialLayerState(
+          "data-blob-is-morphing",
+          "data-blob-morph-autoplay",
+          false,
+          masterOff,
+          reduce,
+        )
+      ) {
+        this.playMorph();
+      }
+      if (
+        this._initialLayerState(
+          "data-blob-is-drifting",
+          "data-blob-drift-autoplay",
+          false,
+          masterOff,
+          reduce,
+        )
+      ) {
         this.startDrift();
       }
 
-      // Auto-animate the morph loop
-      if (this.getAttribute("data-blob-animate") === "true" && !prefersReducedMotion()) {
-        this.playMorph();
-      }
-
       this._connected = true;
+      this._reflectState();
+    }
+
+    _initialLayerState(stateAttr, autoplayAttr, autoplayDefault, masterOff, reduce) {
+      const explicit = this.getAttribute(stateAttr);
+      if (explicit != null) return explicit !== "false";
+      return !masterOff && !reduce && this._boolAttr(autoplayAttr, autoplayDefault);
     }
 
     // Attributes are reactive: change one and the element re-tunes in place.
     attributeChangedCallback(name, oldValue, newValue) {
+      if (this._writingState.has(name)) return; // our own state reflection
       if (oldValue === newValue || !this._connected) return;
       switch (name) {
         case "data-blob-points":
@@ -261,7 +317,8 @@
           this._readConfig();
           this._retuneShape();
           break;
-        case "data-blob-morph":
+        case "data-blob-morph-tween":
+        case "data-blob-morph-intensity":
           this._readConfig();
           break;
         case "data-blob-drift-speed": {
@@ -274,47 +331,71 @@
           }
           break;
         }
+        case "data-blob-drift-intensity":
+          this._readConfig();
+          break;
         case "data-blob-wobble-speed":
-        case "data-blob-wobble-amount":
+        case "data-blob-wobble-intensity":
           this._applyWobbleVars();
           break;
-        case "data-blob-speed":
+        case "data-blob-morph-speed":
           this._readConfig();
-          if (this.isAnimating) {
+          if (this._morphing) {
             this.pauseMorph();
             this.playMorph();
           }
           break;
-        case "data-blob-animate":
-          if (newValue === "true" && !prefersReducedMotion()) this.playMorph();
+        case "data-blob-wobble-autoplay":
+          if (this._boolAttr("data-blob-wobble-autoplay", true)) this.playWobble();
+          else this.pauseWobble();
+          break;
+        case "data-blob-morph-autoplay":
+          if (this._boolAttr("data-blob-morph-autoplay", false)) this.playMorph();
           else this.pauseMorph();
           break;
-        case "data-blob-drift":
-          if (isTruthyAttr(newValue) && !prefersReducedMotion()) {
+        case "data-blob-drift-autoplay":
+          if (
+            this._boolAttr("data-blob-drift-autoplay", false) &&
+            this.getAttribute("data-blob-is-animating") !== "false"
+          ) {
             this.startDrift();
           } else {
-            // Fully tear down so the element returns to normal flow (re-centers),
-            // unlike data-blob-paused which freezes drift in place.
+            // Tear all the way down so the element returns to flow (re-centers),
+            // unlike is-drifting="false", which freezes drift in place.
             this.stopDrift();
-            this.removeAttribute("data-blob-drifting");
+            this.classList.remove("dynamo-blob--drift");
             this.style.transform = "";
             this.driftInitialized = false;
+            this._reflectState();
           }
           break;
-        case "data-blob-click":
+        case "data-blob-drift-click":
           this._applyClick();
           break;
-        case "data-blob-paused":
-          // Master freeze: wobble is handled by the [data-blob-paused] CSS rule,
-          // kept independent of data-blob-wobble-paused so they don't clobber.
-          if (newValue !== null && newValue !== "false") {
+        case "data-blob-is-wobbling":
+          if (newValue === "false") this.pauseWobble();
+          else this.playWobble();
+          break;
+        case "data-blob-is-morphing":
+          if (newValue === "false") this.pauseMorph();
+          else this.playMorph();
+          break;
+        case "data-blob-is-drifting":
+          if (newValue === "false") this.pauseDrift();
+          else this.playDrift();
+          break;
+        case "data-blob-is-animating":
+          // Master freeze / resume. false pauses every layer in place; true (or
+          // removed) resumes the auto-play layers. Explicit, so it ignores
+          // prefers-reduced-motion.
+          if (newValue === "false") {
+            this.pauseWobble();
             this.pauseMorph();
             this.pauseDrift();
           } else {
-            if (isTruthyAttr(this.getAttribute("data-blob-drift")) && !prefersReducedMotion())
-              this.startDrift();
-            if (this.getAttribute("data-blob-animate") === "true" && !prefersReducedMotion())
-              this.playMorph();
+            if (this._boolAttr("data-blob-wobble-autoplay", true)) this.playWobble();
+            if (this._boolAttr("data-blob-morph-autoplay", false)) this.playMorph();
+            if (this._boolAttr("data-blob-drift-autoplay", false)) this.startDrift();
           }
           break;
       }
@@ -327,13 +408,23 @@
       const varianceAttr = parseFloat(this.getAttribute("data-blob-variance"));
       this.variance = Number.isFinite(varianceAttr) ? varianceAttr : 8;
 
-      this.speed = parseFloat(this.getAttribute("data-blob-speed")) || 7500;
+      this.speed = parseFloat(this.getAttribute("data-blob-morph-speed")) || 7500;
 
-      const morphAttr = parseFloat(this.getAttribute("data-blob-morph"));
-      this.morphMs = Number.isFinite(morphAttr) ? morphAttr : 600;
+      const tweenAttr = parseFloat(this.getAttribute("data-blob-morph-tween"));
+      this.morphMs = Number.isFinite(tweenAttr) ? tweenAttr : 600;
+
+      const morphIntensityAttr = parseFloat(this.getAttribute("data-blob-morph-intensity"));
+      this.morphIntensity = Number.isFinite(morphIntensityAttr)
+        ? Math.max(0, morphIntensityAttr)
+        : 1;
 
       const driftAttr = parseFloat(this.getAttribute("data-blob-drift-speed"));
       this.driftSpeed = Number.isFinite(driftAttr) ? driftAttr : 1.25;
+
+      const driftIntensityAttr = parseFloat(this.getAttribute("data-blob-drift-intensity"));
+      this.driftIntensity = Number.isFinite(driftIntensityAttr)
+        ? Math.max(0, driftIntensityAttr)
+        : 1;
 
       // Seed: a decodable path reproduces an exact shape; any other non-empty
       // string deterministically drives generation; otherwise it's random.
@@ -363,19 +454,43 @@
         "--dynamo-blob-time",
         `${Number.isFinite(wobbleSpeed) ? wobbleSpeed : 30000}ms`,
       );
-      const wobbleAmount = parseFloat(this.getAttribute("data-blob-wobble-amount"));
+      const wobbleIntensity = parseFloat(this.getAttribute("data-blob-wobble-intensity"));
       this.style.setProperty(
-        "--dynamo-blob-amount",
-        String(Number.isFinite(wobbleAmount) ? wobbleAmount : 2),
+        "--dynamo-blob-intensity",
+        String(Number.isFinite(wobbleIntensity) ? wobbleIntensity : 2),
       );
     }
 
+    // Read a boolean-ish attribute. Absent → default; "false"/"0"/"no"/"off" → false.
+    _boolAttr(name, dflt) {
+      const v = this.getAttribute(name);
+      if (v == null) return dflt;
+      return !["false", "0", "no", "off"].includes(v.trim().toLowerCase());
+    }
+
+    // Mirror live play/pause state to the data-blob-is-* attributes. Guarded so
+    // the resulting attributeChangedCallback is ignored (no feedback loop).
+    _reflectState() {
+      this._reflect("data-blob-is-wobbling", this.isWobbling);
+      this._reflect("data-blob-is-morphing", this.isMorphing);
+      this._reflect("data-blob-is-drifting", this.isDrifting);
+      this._reflect("data-blob-is-animating", this.isAnimating);
+    }
+
+    _reflect(name, on) {
+      const value = on ? "true" : "false";
+      if (this.getAttribute(name) === value) return;
+      this._writingState.add(name);
+      this.setAttribute(name, value);
+      this._writingState.delete(name);
+    }
+
     _applyClick() {
-      if (isTruthyAttr(this.getAttribute("data-blob-click"))) {
-        this.setAttribute("data-blob-clickable", "");
+      if (this._boolAttr("data-blob-drift-click", false)) {
+        this.classList.add("dynamo-blob--clickable");
         this.addEventListener("click", this._onClick);
       } else {
-        this.removeAttribute("data-blob-clickable");
+        this.classList.remove("dynamo-blob--clickable");
         this.removeEventListener("click", this._onClick);
       }
     }
@@ -389,7 +504,7 @@
     _retuneShape() {
       if (!this.path) return;
       const target = this._seedPath || this.generatePathString();
-      if (this.isAnimating) {
+      if (this._morphing) {
         this.targetPath = target;
         this.pendingPath = null;
         return;
@@ -431,26 +546,37 @@
       });
     }
 
+    // The next silhouette for the morph loop: a fixed-magnitude perturbation of
+    // `fromPath`, so every cycle moves the shape by a consistent amount in a
+    // random direction. Higher intensity = bigger, reliably dramatic changes
+    // (no accidental near-duplicates that make the loop look stalled).
+    nextMorphTarget(fromPath) {
+      return nextMorphShape(fromPath, {
+        variance: this.variance,
+        intensity: this.morphIntensity,
+        random: Math.random,
+      });
+    }
+
     // --- unified controls ---------------------------------------------------
-    // Resume every animation the blob is configured to run. An options key
-    // *forces* that animation on (and tunes it) regardless of its config flag;
-    // unkeyed animations resume context-aware. Durations are in ms (morph,
-    // wobble); drift takes a speed multiplier. Explicit play ignores
-    // prefers-reduced-motion — that gate only applies to auto-play paths.
+    // Resume the layers the blob is configured to auto-play. An options key
+    // *forces* that layer on (and tunes it). Durations are in ms (morph, wobble);
+    // drift takes a speed multiplier. Explicit play ignores prefers-reduced-motion
+    // — that gate only applies to auto-play on render.
     play(options = {}) {
       const opts = options || {};
-      if (opts.wobble != null || this.getAttribute("data-blob-wobble") !== "false") {
+      if (opts.wobble != null || this._boolAttr("data-blob-wobble-autoplay", true)) {
         this.playWobble(opts.wobble);
       }
-      if (opts.morph != null || this.getAttribute("data-blob-animate") === "true") {
+      if (opts.morph != null || this._boolAttr("data-blob-morph-autoplay", false)) {
         this.playMorph(opts.morph);
       }
-      if (opts.drift != null || isTruthyAttr(this.getAttribute("data-blob-drift"))) {
+      if (opts.drift != null || this._boolAttr("data-blob-drift-autoplay", false)) {
         this.playDrift(opts.drift);
       }
     }
 
-    // Freeze all three animations in place.
+    // Freeze all three layers in place.
     pause() {
       this.pauseWobble();
       this.pauseMorph();
@@ -459,33 +585,39 @@
 
     // --- wobble (CSS) -------------------------------------------------------
     // Resume the ambient wobble. An optional period (ms) sets the turn cycle.
-    // Does not override a hard data-blob-wobble="false" disable.
     playWobble(durationMs) {
       if (Number.isFinite(durationMs)) {
         this.style.setProperty("--dynamo-blob-time", `${durationMs}ms`);
       }
-      this.removeAttribute("data-blob-wobble-paused");
+      this._wobbling = true;
+      this._reflectState();
     }
 
     // Freeze the wobble at its current position (animation-play-state: paused).
     pauseWobble() {
-      this.setAttribute("data-blob-wobble-paused", "true");
+      this._wobbling = false;
+      this._reflectState();
     }
 
     // --- morph loop ---------------------------------------------------------
     playMorph(customDuration = null) {
-      if (this.isAnimating) return;
-      this.isAnimating = true;
+      if (this._morphing) return;
+      this._morphing = true;
+      this._reflectState();
       const duration = customDuration || this.speed;
 
+      // Baseline the first target off the current shape so even the opening
+      // cycle obeys the intensity-driven magnitude.
+      this.targetPath = this.nextMorphTarget(this.currentPath);
+
       const loop = () => {
-        if (!this.pendingPath) this.pendingPath = this.generatePathString();
+        if (!this.pendingPath) this.pendingPath = this.nextMorphTarget(this.targetPath);
         this.animateBlob(duration, () => {
           this.currentPath = this.targetPath;
           this.updateSeedAttribute(this.currentPath);
           this.targetPath = this.pendingPath;
-          this.pendingPath = this.generatePathString();
-          if (this.isAnimating) loop();
+          this.pendingPath = this.nextMorphTarget(this.targetPath);
+          if (this._morphing) loop();
         });
       };
 
@@ -493,12 +625,16 @@
     }
 
     pauseMorph() {
-      if (!this.isAnimating) return;
-      this.isAnimating = false;
+      if (!this._morphing) {
+        this._reflectState();
+        return;
+      }
+      this._morphing = false;
       if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
       this.elapsedTime += performance.now() - (this.startTime || performance.now());
       this.startTime = null;
+      this._reflectState();
     }
 
     // --- drift --------------------------------------------------------------
@@ -615,7 +751,7 @@
       // Initialise before going absolute so a "current" start can read the
       // element's laid-out position (offsetLeft/Top) while it's still in flow.
       if (!this.driftInitialized) this.initDrift();
-      this.setAttribute("data-blob-drifting", "");
+      this.classList.add("dynamo-blob--drift");
       const step = () => {
         this.driftPosX += this.driftVelX;
         this.driftPosY += this.driftVelY;
@@ -636,18 +772,30 @@
         const maxX = pw - w + insetX;
         const minY = -insetY;
         const maxY = ph - h + insetY;
+        // On a wall hit, reflect and scale velocity by drift intensity
+        // (restitution): 1 is perfectly elastic, <1 damps, >1 energizes.
         if (this.driftPosX > maxX || this.driftPosX < minX) {
-          this.driftVelX = -this.driftVelX;
+          this.driftVelX = -this.driftVelX * this.driftIntensity;
           this.driftPosX = Math.max(minX, Math.min(this.driftPosX, maxX));
+          this._clampDriftSpeed();
         }
         if (this.driftPosY > maxY || this.driftPosY < minY) {
-          this.driftVelY = -this.driftVelY;
+          this.driftVelY = -this.driftVelY * this.driftIntensity;
           this.driftPosY = Math.max(minY, Math.min(this.driftPosY, maxY));
+          this._clampDriftSpeed();
         }
         this.style.transform = `translate3d(${this.driftPosX}px, ${this.driftPosY}px, 0)`;
         this.driftFrameId = requestAnimationFrame(step);
       };
       this.driftFrameId = requestAnimationFrame(step);
+      this._reflectState();
+    }
+
+    // Keep an energized bounce (intensity > 1) from running away to infinity.
+    _clampDriftSpeed() {
+      const cap = Math.max(0.5, this.driftSpeed * 0.1 * 4);
+      this.driftVelX = Math.max(-cap, Math.min(cap, this.driftVelX));
+      this.driftVelY = Math.max(-cap, Math.min(cap, this.driftVelY));
     }
 
     initDrift() {
@@ -658,7 +806,7 @@
       // Where the bounce begins. Default is a random spot (scatters ambient
       // backgrounds); "current" continues from the element's laid-out position
       // (no teleport), "center" starts from the container's middle.
-      const start = (this.getAttribute("data-blob-drift-start") || "").toLowerCase();
+      const start = (this.getAttribute("data-blob-drift-start-position") || "").toLowerCase();
       if (start === "current") {
         this.driftPosX = Math.max(0, Math.min(this.offsetLeft, maxX));
         this.driftPosY = Math.max(0, Math.min(this.offsetTop, maxY));
@@ -707,6 +855,7 @@
     stopDrift() {
       if (this.driftFrameId) cancelAnimationFrame(this.driftFrameId);
       this.driftFrameId = null;
+      this._reflectState();
     }
 
     deflect() {
@@ -765,6 +914,50 @@
    */
   function generateBlobPath({ points, variance, random = Math.random }) {
     return pointsToPath(generateBlobPoints(points, variance, random));
+  }
+
+  /**
+   * Produce the next morph silhouette as a fixed-magnitude perturbation of a base
+   * shape. Each vertex radius is nudged in a random direction, then the whole
+   * displacement is rescaled so its per-vertex RMS equals `intensity * variance`.
+   * Because the magnitude is enforced, successive morphs feel consistently lively
+   * — high intensity guarantees dramatic change instead of occasionally landing
+   * on a near-identical shape. Radii are clamped to BASE_RADIUS ± variance.
+   * @param {string} fromPath - The baseline silhouette path.
+   * @param {Object} options
+   * @param {number} options.variance - Radius deviation in internal units.
+   * @param {number} options.intensity - Magnitude factor (fraction of variance, RMS).
+   * @param {() => number} [options.random] - RNG (defaults to Math.random).
+   * @returns {string} SVG path data.
+   */
+  function nextMorphShape(fromPath, { variance, intensity, random = Math.random }) {
+    const pts = parseBlobPath(fromPath);
+    const n = pts.length;
+    if (!n) return generateBlobPath({ points: 10, variance, random });
+
+    const radii = pts.map((p) => Math.hypot(p.x - CENTER, p.y - CENTER));
+    const dirs = [];
+    let sumSq = 0;
+    for (let i = 0; i < n; i++) {
+      const d = random() * 2 - 1;
+      dirs.push(d);
+      sumSq += d * d;
+    }
+    // Normalize so the direction vector has unit RMS, then scale to the target
+    // RMS displacement. amp is the consistent per-cycle radial change.
+    const rms = Math.sqrt(sumSq / n) || 1;
+    const amp = Math.max(0, intensity) * variance;
+    const min = BASE_RADIUS - variance;
+    const max = BASE_RADIUS + variance;
+
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      let r = radii[i] + (dirs[i] / rms) * amp;
+      r = Math.max(min, Math.min(max, r));
+      const ang = (i / n) * 2 * Math.PI;
+      out.push({ x: CENTER + Math.cos(ang) * r, y: CENTER + Math.sin(ang) * r });
+    }
+    return pointsToPath(out);
   }
 
   /**
@@ -917,6 +1110,7 @@
   exports.generateBlobPath = generateBlobPath;
   exports.generateBlobPoints = generateBlobPoints;
   exports.interpolateBlob = interpolateBlob;
+  exports.nextMorphShape = nextMorphShape;
   exports.parseBlobPath = parseBlobPath;
   exports.resampleClosed = resampleClosed;
 

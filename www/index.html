@@ -90,9 +90,9 @@
     </p>
 
     <div class="blob-hero">
-      <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="6000" data-blob-points="10" data-blob-variance="10" style="width:96px;height:96px"></dynamo-blob>
+      <dynamo-blob class="fill-theme" data-blob-morph-autoplay="true" data-blob-morph-speed="6000" data-blob-points="10" data-blob-variance="10" style="width:96px;height:96px"></dynamo-blob>
       <dynamo-blob class="fill-theme fill-light" data-blob-points="7" data-blob-variance="12" style="width:120px;height:120px"></dynamo-blob>
-      <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="9000" data-blob-points="16" data-blob-variance="8" style="width:80px;height:80px"></dynamo-blob>
+      <dynamo-blob class="fill-theme" data-blob-morph-autoplay="true" data-blob-morph-speed="9000" data-blob-points="16" data-blob-variance="8" style="width:80px;height:80px"></dynamo-blob>
       <dynamo-blob class="fill-theme fill-light" data-blob-points="12" data-blob-variance="14" style="width:104px;height:104px"></dynamo-blob>
     </div>
     <div style="margin-bottom:1.5rem">
@@ -229,82 +229,125 @@
 
 <div class="note"><p>A seed can be the compact path string the component writes back to <code>data-blob-seed</code> (reproduces the exact path), or any arbitrary string (deterministically seeds generation).</p></div>
 
+<h4 id="motion-layers">Motion: wobble, morph &amp; drift</h4>
+
+<p>Every blob has three independent motion layers, and they're <strong>always ready to go</strong>. You don't enable them — you decide whether each one <strong>auto-plays</strong> on render, and you can play or pause any of them live. The attributes follow one pattern across all three:</p>
+<div class="table-container" tabindex="0">
+    <table aria-label="Motion attribute naming convention table">
+    <thead>
+        <tr><th scope="col">Pattern</th><th scope="col">Purpose</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><p style="min-width:max-content;">data-blob-<em>&lt;layer&gt;</em>-autoplay</p></td><td>Start this layer on render (<code>true</code> / <code>false</code>).</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-is-<em>&lt;layer&gt;</em>ing</p></td><td>Set <code>false</code> to pause, <code>true</code> to play. Also reflects the live state.</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-<em>&lt;layer&gt;</em>-speed</p></td><td>How fast the layer runs.</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-<em>&lt;layer&gt;</em>-intensity</p></td><td>How strong the effect is.</td></tr>
+    </tbody>
+    </table>
+</div>
+
+<div class="note"><p><strong>Accessibility:</strong> the <code>*-autoplay</code> flags are suppressed when the viewer has <strong>reduced motion</strong> enabled. Explicit play (an <code>is-*</code> attribute or a JS call) is treated as intentional and runs regardless.</p></div>
+
 <h4 id="blob-wobble">Wobble</h4>
 
-<p>By default a blob gently <strong>wobbles</strong> — a continuous CSS turn, skew, and scale. Tune or disable it.</p>
+<p>By default a blob gently <strong>wobbles</strong> — a continuous CSS turn, skew, and scale. Set the speed and skew intensity, or pause it.</p>
 <div class="table-container" tabindex="0">
     <table aria-label="Blob wobble attribute configuration table">
     <thead>
         <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
     </thead>
     <tbody>
-        <tr><td><p>data-blob-wobble</p></td><td>true</td><td>true, false</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-wobble-autoplay</p></td><td>true</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-is-wobbling</p></td><td>reflects state</td><td>true, false</td></tr>
         <tr><td><p>data-blob-wobble-speed</p></td><td>30000</td><td>Period in milliseconds</td></tr>
-        <tr><td><p>data-blob-wobble-amount</p></td><td>2</td><td>Skew intensity multiplier</td></tr>
-        <tr><td><p>data-blob-wobble-paused</p></td><td>unset</td><td>Present to freeze the wobble in place</td></tr>
+        <tr><td><p>data-blob-wobble-intensity</p></td><td>2</td><td>Skew intensity multiplier</td></tr>
     </tbody>
     </table>
 </div>
 
-<pre><code class="language-html">&lt;dynamo-blob data-blob-wobble-speed="12000" data-blob-wobble-amount="3"&gt;&lt;/dynamo-blob&gt;
+<pre><code class="language-html">&lt;dynamo-blob data-blob-wobble-speed="12000" data-blob-wobble-intensity="3"&gt;&lt;/dynamo-blob&gt;
 </code></pre>
 <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
-  <dynamo-blob class="fill-theme" data-blob-wobble-speed="10000" data-blob-wobble-amount="3" style="width:120px;height:120px"></dynamo-blob>
-  <dynamo-blob class="fill-theme fill-light" data-blob-wobble="false" style="width:120px;height:120px"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-wobble-speed="10000" data-blob-wobble-intensity="3" style="width:120px;height:120px"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" data-blob-wobble-autoplay="false" style="width:120px;height:120px"></dynamo-blob>
 </div>
 
-<p>Wobble runs on its own pair of methods too — <code>playWobble(<em>ms</em>)</code> and <code>pauseWobble()</code> — or set <code>data-blob-wobble-paused</code> at render to start it frozen but resumable.</p>
+<p>The second blob sets <code>data-blob-wobble-autoplay="false"</code>, so it sits still until you start it — via <code>playWobble(<em>ms</em>)</code> or by setting <code>data-blob-is-wobbling="true"</code>.</p>
 
-<h4 id="blob-animation">Morph Animation</h4>
+<h4 id="blob-morph">Morph</h4>
 
-<p>Want a blob that endlessly reshapes itself? Reach for <strong><code>data-blob-animate</code></strong> and <strong><code>data-blob-speed</code></strong> — the blob continuously regenerates and morphs between silhouettes.</p>
+<p>Want a blob that endlessly reshapes itself? Turn on <strong><code>data-blob-morph-autoplay</code></strong> and the blob continuously regenerates and morphs between silhouettes. <strong><code>data-blob-morph-speed</code></strong> sets the per-cycle duration; <strong><code>data-blob-morph-intensity</code></strong> sets how far each cycle reshapes it.</p>
 <div class="table-container" tabindex="0">
-    <table aria-label="Blob animation attribute configuration table">
+    <table aria-label="Blob morph attribute configuration table">
     <thead>
         <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
     </thead>
     <tbody>
-        <tr><td><p>data-blob-animate</p></td><td>false</td><td>true, false</td></tr>
-        <tr><td><p>data-blob-speed</p></td><td>7500</td><td>Morph duration in milliseconds</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-morph-autoplay</p></td><td>false</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-is-morphing</p></td><td>reflects state</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-morph-speed</p></td><td>7500</td><td>Per-cycle duration in milliseconds</td></tr>
+        <tr><td><p>data-blob-morph-intensity</p></td><td>1</td><td>How dramatic each reshape is</td></tr>
+        <tr><td><p>data-blob-morph-tween</p></td><td>600</td><td>Tween (ms) when a shape attribute changes live; <code>0</code> snaps</td></tr>
     </tbody>
     </table>
 </div>
-<div class="note"><p><strong>Accessibility Note:</strong> <strong>data-blob-animate</strong> is ignored when the viewer's browser has <strong>reduced motion</strong> enabled.</p></div>
 
-<pre><code class="language-html">&lt;dynamo-blob data-blob-animate="true" data-blob-speed="4000"&gt;&lt;/dynamo-blob&gt;
+<div class="note"><p><strong>Consistent drama:</strong> <code>morph-intensity</code> holds the amount of change constant from one cycle to the next, so the loop never lands on a near-identical shape and stalls. Higher values stay reliably bold.</p></div>
+
+<pre><code class="language-html">&lt;dynamo-blob data-blob-morph-autoplay="true" data-blob-morph-speed="4000"&gt;&lt;/dynamo-blob&gt;
 </code></pre>
 <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:center">
-  <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="4000" style="width:130px;height:130px"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-morph-autoplay="true" data-blob-morph-speed="4000" data-blob-morph-intensity="0.6" style="width:130px;height:130px"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" data-blob-morph-autoplay="true" data-blob-morph-speed="4000" data-blob-morph-intensity="1.5" style="width:130px;height:130px"></dynamo-blob>
 </div>
+<p class="note">The right-hand blob uses a higher <code>data-blob-morph-intensity</code> for bigger swings.</p>
 
-<h4 id="blob-drift">Drift &amp; Click</h4>
+<h4 id="blob-drift">Drift</h4>
 
-<p>Set <strong><code>data-blob-drift</code></strong> and the blob will bounce around its nearest <strong>positioned, sized</strong> ancestor. Add <strong><code>data-blob-click</code></strong> to send it off in a new direction on click. Stack a few for an ambient background.</p>
+<p>Set <strong><code>data-blob-drift-autoplay</code></strong> and the blob bounces around its nearest <strong>positioned, sized</strong> ancestor. Add <strong><code>data-blob-drift-click</code></strong> to send it off in a new direction on click, and <strong><code>data-blob-drift-intensity</code></strong> to tune how it reacts to the walls. Stack a few for an ambient background.</p>
 <div class="table-container" tabindex="0">
     <table aria-label="Blob drift attribute configuration table">
     <thead>
         <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
     </thead>
     <tbody>
-        <tr><td><p>data-blob-drift</p></td><td>false</td><td>true, false</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-drift-autoplay</p></td><td>false</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-is-drifting</p></td><td>reflects state</td><td>true, false</td></tr>
         <tr><td><p>data-blob-drift-speed</p></td><td>1.25</td><td>Any positive number</td></tr>
-        <tr><td><p>data-blob-drift-start</p></td><td>random</td><td>random, center, current</td></tr>
-        <tr><td><p>data-blob-click</p></td><td>false</td><td>true, false</td></tr>
+        <tr><td><p>data-blob-drift-intensity</p></td><td>1</td><td>Bounce restitution: 1 elastic, &lt;1 damps, &gt;1 energizes</td></tr>
+        <tr><td><p>data-blob-drift-click</p></td><td>false</td><td>true, false</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-drift-start-position</p></td><td>random</td><td>random, center, current</td></tr>
     </tbody>
     </table>
 </div>
 
-<pre><code class="language-html">&lt;div style="position:relative;height:240px"&gt;
-  &lt;dynamo-blob data-blob-drift="true" data-blob-click="true" style="width:70px;height:70px"&gt;&lt;/dynamo-blob&gt;
+<pre><code class="language-html">&lt;div style="position:relative;height:240px;overflow:clip"&gt;
+  &lt;dynamo-blob data-blob-drift-autoplay="true" data-blob-drift-click="true" style="width:70px;height:70px"&gt;&lt;/dynamo-blob&gt;
 &lt;/div&gt;
 </code></pre>
 <div style="position:relative;height:240px;border:1px solid var(--theme);border-radius:12px;overflow:hidden;margin-top:1rem">
-  <dynamo-blob class="fill-theme" data-blob-drift="true" data-blob-click="true" data-blob-drift-speed="2" style="width:64px;height:64px"></dynamo-blob>
-  <dynamo-blob class="fill-theme fill-light" data-blob-drift="true" data-blob-click="true" data-blob-drift-speed="3" data-blob-points="8" style="width:90px;height:90px"></dynamo-blob>
-  <dynamo-blob class="fill-ink" data-blob-drift="true" data-blob-click="true" data-blob-drift-speed="1.5" data-blob-points="14" style="width:48px;height:48px"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-drift-autoplay="true" data-blob-drift-click="true" data-blob-drift-speed="2" style="width:64px;height:64px"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" data-blob-drift-autoplay="true" data-blob-drift-click="true" data-blob-drift-speed="3" data-blob-points="8" style="width:90px;height:90px"></dynamo-blob>
+  <dynamo-blob class="fill-ink" data-blob-drift-autoplay="true" data-blob-drift-click="true" data-blob-drift-speed="1.5" data-blob-points="14" style="width:48px;height:48px"></dynamo-blob>
 </div>
 <p class="note"><strong>Tip:</strong> click a blob above to deflect it.</p>
 
+<h4 id="blob-master">Pause everything</h4>
+
+<p><strong><code>data-blob-is-animating</code></strong> is the master switch. Set it to <code>false</code> to freeze all three layers in place; set it to <code>true</code> to resume the ones configured to auto-play. It also reflects the live state — <code>true</code> whenever any layer is playing — and is exposed as <code>.isAnimating</code>.</p>
+<div class="table-container" tabindex="0">
+    <table aria-label="Blob master animation attribute configuration table">
+    <thead>
+        <tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Options</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><p style="min-width:max-content;">data-blob-is-animating</p></td><td>reflects state</td><td>true, false</td></tr>
+    </tbody>
+    </table>
+</div>
+
+<pre><code class="language-html">&lt;dynamo-blob data-blob-is-animating="false"&gt;&lt;/dynamo-blob&gt;
+</code></pre>
 <h4 id="blob-observation">Observation</h4>
 
 <p>Leaning into generative design? <strong><code>data-blob-observe</code></strong> wires up an <a class="link" rel="external" target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">IntersectionObserver</a> that regenerates the blob as it leaves the viewport.</p>
@@ -345,8 +388,8 @@ blob.generateNewBlob(500);
 <p><button style="margin:1rem 0 2rem" onclick="regenBlob('regen-example-blob', 500)"><i data-feather="refresh-cw"></i>New Blob</button></p>
 <h4 id="play">.play()</h4>
 
-<p><strong><code>play()</code></strong> resumes every animation the blob is configured to run — the ambient wobble (on by default), the morph loop (when <code>data-blob-animate</code> is set), and drift (when <code>data-blob-drift</code> is set).</p>
-<p>Pass an options object to <strong>force</strong> an animation on and tune its timing. Morph and wobble durations are in <strong>milliseconds</strong>; drift takes a <strong>speed multiplier</strong>.</p>
+<p><strong><code>play()</code></strong> resumes every layer the blob is configured to auto-play — wobble (on by default), the morph loop (when <code>data-blob-morph-autoplay</code> is set), and drift (when <code>data-blob-drift-autoplay</code> is set).</p>
+<p>Pass an options object to <strong>force</strong> a layer on and tune its timing. Morph and wobble durations are in <strong>milliseconds</strong>; drift takes a <strong>speed multiplier</strong>.</p>
 <pre><code class="language-javascript">const blob = document.querySelector('dynamo-blob');
 
 blob.play();                                          // resume what's enabled
@@ -369,14 +412,18 @@ blob.play({ morph: 4000, wobble: 20000, drift: 2 });  // force + tune all three
 blob.playMorph(4000);    blob.pauseMorph();   // morph loop
 blob.playDrift(2);       blob.pauseDrift();   // drift
 
-// Toggle just the morph loop off its own state flag:
-blob.isAnimating ? blob.pauseMorph() : blob.playMorph(5000);
+// Each layer exposes its live state (also mirrored to data-blob-is-* attributes):
+blob.isWobbling;  blob.isMorphing;  blob.isDrifting;
+blob.isAnimating; // true when any layer is playing
+
+// Toggle just the morph loop off its own state:
+blob.isMorphing ? blob.pauseMorph() : blob.playMorph(5000);
 </code></pre>
-<div class="note"><p><strong>Reduced motion:</strong> explicit <code>play*()</code> calls run regardless of <code>prefers-reduced-motion</code> — only the declarative auto-play attributes honor it.</p></div>
+<div class="note"><p><strong>Reduced motion:</strong> explicit <code>play*()</code> calls run regardless of <code>prefers-reduced-motion</code> — only the declarative <code>*-autoplay</code> attributes honor it.</p></div>
 
 <h4 id="deflect">.deflect()</h4>
 
-<p>For a drifting blob (see <code>data-blob-drift</code>), <strong><code>deflect()</code></strong> kicks it off in a new random direction — the same thing a click does when <code>data-blob-click</code> is set.</p>
+<p>For a drifting blob (see <code>data-blob-drift-autoplay</code>), <strong><code>deflect()</code></strong> kicks it off in a new random direction — the same thing a click does when <code>data-blob-drift-click</code> is set.</p>
 <div class="note"><p><strong>Need to know when a morph finishes?</strong> Listen for the <code>dynamo-blob-complete</code> event to react when a cycle ends.</p></div>
 
 <pre><code class="language-javascript">document.querySelector('dynamo-blob')
@@ -393,17 +440,17 @@ blob.isAnimating ? blob.pauseMorph() : blob.playMorph(5000);
 <h3 id="layered-background">Ambient layered background</h3>
 
 <p>A few drifting blobs at low opacity make a living, generative backdrop — the same trick behind a hero section. Stack them in a positioned, clipped container.</p>
-<pre><code class="language-html">&lt;div class="hero" style="position:relative;overflow:hidden"&gt;
-  &lt;dynamo-blob data-blob-drift="true" style="width:160px;height:160px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
-  &lt;dynamo-blob data-blob-drift="true" style="width:110px;height:110px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
-  &lt;dynamo-blob data-blob-drift="true" style="width:80px;height:80px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
+<pre><code class="language-html">&lt;div class="hero" style="position:relative;overflow:clip"&gt;
+  &lt;dynamo-blob data-blob-drift-autoplay="true" style="width:160px;height:160px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
+  &lt;dynamo-blob data-blob-drift-autoplay="true" style="width:110px;height:110px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
+  &lt;dynamo-blob data-blob-drift-autoplay="true" style="width:80px;height:80px;opacity:.5"&gt;&lt;/dynamo-blob&gt;
   &lt;h2&gt;Generative by default&lt;/h2&gt;
 &lt;/div&gt;
 </code></pre>
 <div style="position:relative;height:280px;border-radius:14px;overflow:hidden;background:var(--zbk-app-canvas-muted, #1c1c22);display:grid;place-items:center">
-  <dynamo-blob class="fill-theme" data-blob-drift="true" data-blob-drift-speed="1" data-blob-points="16" style="width:160px;height:160px;opacity:.45"></dynamo-blob>
-  <dynamo-blob class="fill-theme fill-light" data-blob-drift="true" data-blob-drift-speed="1.5" data-blob-points="10" style="width:110px;height:110px;opacity:.5"></dynamo-blob>
-  <dynamo-blob class="fill-ink" data-blob-drift="true" data-blob-drift-speed="0.75" data-blob-points="18" style="width:80px;height:80px;opacity:.4"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-drift-autoplay="true" data-blob-drift-speed="1" data-blob-points="16" style="width:160px;height:160px;opacity:.45"></dynamo-blob>
+  <dynamo-blob class="fill-theme fill-light" data-blob-drift-autoplay="true" data-blob-drift-speed="1.5" data-blob-points="10" style="width:110px;height:110px;opacity:.5"></dynamo-blob>
+  <dynamo-blob class="fill-ink" data-blob-drift-autoplay="true" data-blob-drift-speed="0.75" data-blob-points="18" style="width:80px;height:80px;opacity:.4"></dynamo-blob>
   <h2 id="generative-by-default" style="position:relative;margin:0;color:var(--theme);font-family:'Merriweather',serif">Generative by default</h2>
 </div>
 
@@ -411,7 +458,7 @@ blob.isAnimating ? blob.pauseMorph() : blob.playMorph(5000);
 
 <p>Pair a static blob with content for a soft, hand-drawn frame that's never quite the same twice.</p>
 <pre><code class="language-html">&lt;div style="display:flex;align-items:center;gap:1rem"&gt;
-  &lt;dynamo-blob data-blob-animate="true" data-blob-speed="9000"
+  &lt;dynamo-blob data-blob-morph-autoplay="true" data-blob-morph-speed="9000"
     style="width:96px;height:96px;fill:var(--theme)"&gt;&lt;/dynamo-blob&gt;
   &lt;div&gt;
     &lt;h3&gt;Eye-catching headline.&lt;/h3&gt;
@@ -420,7 +467,7 @@ blob.isAnimating ? blob.pauseMorph() : blob.playMorph(5000);
 &lt;/div&gt;
 </code></pre>
 <div class="widget" id="widget_example_3" style="min-height:max-content;display:flex;align-items:center;gap:1.25rem;padding:1rem">
-  <dynamo-blob class="fill-theme" data-blob-animate="true" data-blob-speed="9000" style="width:96px;height:96px;flex:none"></dynamo-blob>
+  <dynamo-blob class="fill-theme" data-blob-morph-autoplay="true" data-blob-morph-speed="9000" style="width:96px;height:96px;flex:none"></dynamo-blob>
   <div class="content" style="align-self:center">
     <h2 id="eye-catching-headline" style="font-family:'Merriweather',serif;color:var(--theme);margin:0">Eye-catching headline.</h2>
     <p style="margin:.25rem 0 0">Further information to draw interest.</p>
