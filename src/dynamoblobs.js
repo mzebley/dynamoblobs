@@ -163,6 +163,8 @@ class DynamoBlob extends HTMLElement {
     this.driftVelX = 0;
     this.driftVelY = 0;
     this.driftInitialized = false;
+    this._driftInset = null; // measured padding between host box and visible blob
+    this._driftInsetTick = 0;
 
     this.intersectionObserver = null;
     this.random = Math.random;
@@ -612,9 +614,18 @@ class DynamoBlob extends HTMLElement {
       this.driftPosX += this.driftVelX;
       this.driftPosY += this.driftVelY;
       const { w, h, pw, ph } = this.driftBounds();
-      // Let the (mostly transparent) box overhang the walls by its padding so
-      // the *visible* blob is what bounces, not the host box.
-      const { x: insetX, y: insetY } = this.driftInset(w, h);
+      // Bounce off the blob's *visible* extent, not the host box. The silhouette
+      // fills only the middle of the box (transparent headroom for variance +
+      // wobble), so we let the box overhang the walls by that padding. Measured
+      // from the rendered geometry (so it tracks variance, morph, and wobble)
+      // and refreshed every few frames — it changes slowly, so this stays cheap.
+      if (this._driftInsetTick <= 0) {
+        this._driftInset = this.measureDriftInset();
+        this._driftInsetTick = 10;
+      }
+      this._driftInsetTick--;
+      const insetX = this._driftInset ? this._driftInset.x : 0;
+      const insetY = this._driftInset ? this._driftInset.y : 0;
       const minX = -insetX;
       const maxX = pw - w + insetX;
       const minY = -insetY;
@@ -667,13 +678,24 @@ class DynamoBlob extends HTMLElement {
     };
   }
 
-  // Drift bounces off the blob's visible extent, not the host box. The
-  // silhouette spans ~BASE_RADIUS ± variance/2 inside a VIEW box, so this much
-  // of each side is transparent padding we let overhang the walls. Returns px.
-  driftInset(w, h) {
-    const radius = BASE_RADIUS + (this.variance || 0) / 2;
-    const padFraction = Math.max(0, (CENTER - radius) / VIEW);
-    return { x: padFraction * w, y: padFraction * h };
+  // Measure the transparent padding between the host box and the rendered blob
+  // (in px), averaged per axis. Uses the live bounding rects, so it reflects the
+  // actual silhouette including variance, morph, and the CSS wobble — whatever
+  // the blob currently looks like. Returns { x: 0, y: 0 } when unmeasurable.
+  measureDriftInset() {
+    if (!this.path || typeof this.path.getBoundingClientRect !== "function") {
+      return { x: 0, y: 0 };
+    }
+    const host = this.getBoundingClientRect();
+    const blob = this.path.getBoundingClientRect();
+    if (!host.width || !host.height || !blob.width || !blob.height) {
+      return { x: 0, y: 0 };
+    }
+    // Both rects include the drift translate, so these differences are
+    // translate-invariant — pure padding inside the box.
+    const x = Math.max(0, ((blob.left - host.left) + (host.right - blob.right)) / 2);
+    const y = Math.max(0, ((blob.top - host.top) + (host.bottom - blob.bottom)) / 2);
+    return { x, y };
   }
 
   stopDrift() {

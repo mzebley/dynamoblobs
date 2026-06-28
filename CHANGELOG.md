@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-06-27
+
+### Changed
+- The drift bounce now measures the rendered silhouette (host box vs. the path's
+  bounding rect) instead of estimating it from `BASE_RADIUS ± variance/2`. The
+  estimate ignored the CSS wobble (which scales the blob to ~0.9) and the
+  quadratic curve, leaving a small constant gap to the wall; the measurement
+  tracks the actual visible blob — wobble, skew, rotation, and morph included.
+  It is sampled every few frames (it changes slowly) to avoid per-frame layout.
+
 ## [1.4.0] - 2026-06-27
 
 ### Changed

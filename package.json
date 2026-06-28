@@ -1,6 +1,6 @@
 {
   "name": "dynamoblobs",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "type": "module",
   "description": "Lightweight, dependency-free generative SVG blobs that wobble, morph, and drift — delivered as a drop-in custom element.",
   "main": "dist/dynamoblobs.js",
