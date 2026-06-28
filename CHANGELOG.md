@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-06-27
+
+### Added
+- `data-blob-drift-start` attribute controlling where drift begins: `random`
+  (default — scatters ambient backgrounds), `center`, or `current` (continues
+  from the element's laid-out position instead of teleporting to a random spot).
+
+### Changed
+- `startDrift()` now initialises the drift position before switching the element
+  to absolute positioning, so a `current` start can read its in-flow location.
+
 ## [1.2.0] - 2026-06-27
 
 ### Added
