@@ -72,6 +72,7 @@ import 'dynamoblobs';
 | `data-blob-wobble-paused` | _unset_ | Freeze the wobble in place. Set at render to start wobble stopped (still resumable via `playWobble()`). |
 | `data-blob-drift` | `false` | Drift around the nearest positioned ancestor, bouncing off the walls. |
 | `data-blob-drift-speed` | `1.25` | Drift velocity. |
+| `data-blob-drift-start` | `random` | Where drift begins: `random` (scattered), `center`, or `current` (continues from the element's laid-out position — no teleport). |
 | `data-blob-click` | `false` | Deflect to a new direction on click (requires drift). |
 | `data-blob-paused` | _unset_ | When present, freezes wobble, drift, and the morph loop in place. Remove to resume. |
 
@@ -124,6 +125,8 @@ import {
 ## Drift & positioning
 
 Drift translates the element within its nearest **positioned, sized** ancestor (`position: relative` with explicit dimensions). Multiple drifting blobs in one container create the layered, ambient background effect.
+
+By default each blob starts drifting from a random spot, which scatters an ambient field nicely. For a single, centered blob, that random jump is jarring — set `data-blob-drift-start="current"` so it continues from where it's already laid out (no teleport), or `"center"` to begin from the container's middle.
 
 ## Reduced motion
 

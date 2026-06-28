@@ -604,8 +604,10 @@ class DynamoBlob extends HTMLElement {
   // --- drift ("DVD"-style bounce) -----------------------------------------
   startDrift() {
     if (this.driftFrameId) return;
-    this.setAttribute("data-blob-drifting", "");
+    // Initialise before going absolute so a "current" start can read the
+    // element's laid-out position (offsetLeft/Top) while it's still in flow.
     if (!this.driftInitialized) this.initDrift();
+    this.setAttribute("data-blob-drifting", "");
     const step = () => {
       this.driftPosX += this.driftVelX;
       this.driftPosY += this.driftVelY;
@@ -627,8 +629,22 @@ class DynamoBlob extends HTMLElement {
   initDrift() {
     const speed = this.driftSpeed * 0.1;
     const { w, h, pw, ph } = this.driftBounds();
-    this.driftPosX = Math.random() * Math.max(0, pw - w);
-    this.driftPosY = Math.random() * Math.max(0, ph - h);
+    const maxX = Math.max(0, pw - w);
+    const maxY = Math.max(0, ph - h);
+    // Where the bounce begins. Default is a random spot (scatters ambient
+    // backgrounds); "current" continues from the element's laid-out position
+    // (no teleport), "center" starts from the container's middle.
+    const start = (this.getAttribute("data-blob-drift-start") || "").toLowerCase();
+    if (start === "current") {
+      this.driftPosX = Math.max(0, Math.min(this.offsetLeft, maxX));
+      this.driftPosY = Math.max(0, Math.min(this.offsetTop, maxY));
+    } else if (start === "center") {
+      this.driftPosX = maxX / 2;
+      this.driftPosY = maxY / 2;
+    } else {
+      this.driftPosX = Math.random() * maxX;
+      this.driftPosY = Math.random() * maxY;
+    }
     this.driftVelX = Math.random() > 0.5 ? speed : -speed;
     this.driftVelY = Math.random() > 0.5 ? speed : -speed;
     this.driftInitialized = true;

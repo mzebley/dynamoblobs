@@ -119,6 +119,7 @@ Set **```data-blob-drift```** and the blob will bounce around its nearest **posi
     <tbody>
         <tr><td><p>data-blob-drift</p></td><td>false</td><td>true, false</td></tr>
         <tr><td><p>data-blob-drift-speed</p></td><td>1.25</td><td>Any positive number</td></tr>
+        <tr><td><p>data-blob-drift-start</p></td><td>random</td><td>random, center, current</td></tr>
         <tr><td><p>data-blob-click</p></td><td>false</td><td>true, false</td></tr>
     </tbody>
     </table>

@@ -121,6 +121,7 @@ interface DynamoBlobAttributes {
   'data-blob-wobble-paused'?: string;
   'data-blob-drift'?: string;
   'data-blob-drift-speed'?: string;
+  'data-blob-drift-start'?: 'random' | 'center' | 'current';
   'data-blob-click'?: string;
   'data-blob-paused'?: string;
 }
