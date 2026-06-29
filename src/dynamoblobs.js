@@ -499,6 +499,12 @@ class DynamoBlob extends HTMLElement {
   // Mirror live play/pause state to the data-blob-is-* attributes. Guarded so
   // the resulting attributeChangedCallback is ignored (no feedback loop).
   _reflectState() {
+    // Don't stamp state until connectedCallback has finished deciding it. A
+    // setup-time reflect would write partial state (e.g. is-drifting="false"
+    // before drift starts) that _initialLayerState then reads back as an
+    // explicit "off", suppressing that layer's autoplay. The connect path runs
+    // one _reflectState() at the end, which captures the real combined state.
+    if (!this._connected) return;
     this._reflect("data-blob-is-wobbling", this.isWobbling);
     this._reflect("data-blob-is-morphing", this.isMorphing);
     this._reflect("data-blob-is-drifting", this.isDrifting);

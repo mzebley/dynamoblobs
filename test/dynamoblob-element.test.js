@@ -193,6 +193,17 @@ describe('auto-play gating', () => {
     assert.equal(driftOn.isDrifting, true);
   });
 
+  it('drift autoplay still starts when morph autoplay is also on', () => {
+    // Regression: starting morph stamps data-blob-is-drifting="false", which used
+    // to read back as an explicit "off" and suppress drift's own autoplay.
+    const el = makeBlob({
+      'data-blob-morph-autoplay': 'true',
+      'data-blob-drift-autoplay': 'true',
+    });
+    assert.equal(el.isMorphing, true);
+    assert.equal(el.isDrifting, true);
+  });
+
   it('prefers-reduced-motion suppresses all auto-play', () => {
     reducedMotion = true;
     const el = makeBlob({

@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2026-06-29
 
 ### Changed
 - **`data-blob-drift-intensity` now shapes the deflection angle, not speed.** It tunes how
@@ -16,7 +16,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `>1` snaps toward a hard reversal, and `<1` only nudges off the current heading. Corner
   hits reflect off both walls in a single combined bounce.
 
-## [2.0.1] - 2026-06-29
+### Fixed
+- **Drift autoplay didn't start when morph autoplay was also on.** Starting the morph
+  layer reflected `data-blob-is-drifting="false"` onto the element before drift's autoplay
+  was evaluated, so it read back as an explicit "off" and was skipped. Play/pause state is
+  no longer mirrored to the `data-blob-is-*` attributes until the element has finished
+  deciding its initial play state.
+
+## [0.8.0] - 2026-06-29
 
 ### Fixed
 - **Morph could blank the blob.** Changing `data-blob-points` / `data-blob-variance`
@@ -40,7 +47,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   collision radius to tune how tightly the bounce hugs the wall; the default lets the
   blob carry a touch past before reversing.
 
-## [2.0.0] - 2026-06-28
+## [0.7.0] - 2026-06-28
 
 ### Changed
 - **Motion attributes redesigned around a single convention.** Each of the three
@@ -67,7 +74,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - This is a proof-of-concept release with no backwards-compatibility shims for the
   renamed attributes.
 
-## [1.4.1] - 2026-06-27
+## [0.6.0] - 2026-06-27
 
 ### Changed
 - The drift bounce now measures the rendered silhouette (host box vs. the path's
@@ -77,7 +84,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   tracks the actual visible blob — wobble, skew, rotation, and morph included.
   It is sampled every few frames (it changes slowly) to avoid per-frame layout.
 
-## [1.4.0] - 2026-06-27
+## [0.5.0] - 2026-06-27
 
 ### Changed
 - Drift now bounces off the blob's visible silhouette instead of the host
@@ -87,7 +94,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   needs no per-frame `getBBox()`. The transparent box overhangs the container as
   it does so — drift containers should clip overflow.
 
-## [1.3.0] - 2026-06-27
+## [0.4.0] - 2026-06-27
 
 ### Added
 - `data-blob-drift-start` attribute controlling where drift begins: `random`
@@ -98,7 +105,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `startDrift()` now initialises the drift position before switching the element
   to absolute positioning, so a `current` start can read its in-flow location.
 
-## [1.2.0] - 2026-06-27
+## [0.3.0] - 2026-06-27
 
 ### Added
 - Granular runtime controls: `playWobble(ms?)` / `pauseWobble()`, `playMorph(ms?)` /
@@ -124,7 +131,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - No backwards-compatibility shims are included for the renamed/repurposed methods or
   the `data-blob-wobble-speed` unit change.
 
-## [1.1.0]
+## [0.2.0]
 
 ### Added
 - `<dynamo-blob>` attributes are reactive — changing one re-tunes the element in place.
@@ -133,7 +140,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Drift tears down on `data-blob-drift="false"` so the element re-centers.
 
-## [1.0.0]
+## [0.1.0]
 
 ### Added
 - Initial release: dependency-free generative SVG blobs as a `<dynamo-blob>` custom

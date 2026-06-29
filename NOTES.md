@@ -7,4 +7,4 @@
 
 ## BUGS
 
-- [ ] Drift autoplay doesn't work if morph autoplay is set to true.
+- [x] Drift autoplay doesn't work if morph autoplay is set to true.
