@@ -135,7 +135,7 @@ Want a blob that endlessly reshapes itself? Turn on **```data-blob-morph-autopla
 
 <h4 id="blob-drift">Drift</h4>
 
-Set **```data-blob-drift-autoplay```** and the blob bounces around its nearest **positioned, sized** ancestor. Add **```data-blob-drift-click```** to send it off in a new direction on click, and **```data-blob-drift-intensity```** to tune how it reacts to the walls. Stack a few for an ambient background.
+Set **```data-blob-drift-autoplay```** and the blob bounces around its nearest **positioned, sized** ancestor. Add **```data-blob-drift-click```** to send it off in a new direction on click, and **```data-blob-drift-intensity```** to tune how extreme those deflections are — at the walls and on click. Stack a few for an ambient background.
 
 <div class="table-container" tabindex="0">
     <table aria-label="Blob drift attribute configuration table">
@@ -146,7 +146,7 @@ Set **```data-blob-drift-autoplay```** and the blob bounces around its nearest *
         <tr><td><p style="min-width:max-content;">data-blob-drift-autoplay</p></td><td>false</td><td>true, false</td></tr>
         <tr><td><p>data-blob-is-drifting</p></td><td>reflects state</td><td>true, false</td></tr>
         <tr><td><p>data-blob-drift-speed</p></td><td>1.25</td><td>Any positive number</td></tr>
-        <tr><td><p>data-blob-drift-intensity</p></td><td>1</td><td>Bounce restitution: 1 elastic, &lt;1 damps, &gt;1 energizes</td></tr>
+        <tr><td><p>data-blob-drift-intensity</p></td><td>1</td><td>Deflection-angle extremity (walls + click): 1 clean mirror / random click, &gt;1 steep ricochets &amp; hard reversals, &lt;1 shallow skims &amp; nudges</td></tr>
         <tr><td><p style="min-width:max-content;">data-blob-drift-bias</p></td><td>0.9</td><td>Wall-hug tightness: &lt;1 carries past, &gt;1 bounces sooner (0.5–1.5)</td></tr>
         <tr><td><p>data-blob-drift-click</p></td><td>false</td><td>true, false</td></tr>
         <tr><td><p style="min-width:max-content;">data-blob-drift-start-position</p></td><td>random</td><td>random, center, current</td></tr>

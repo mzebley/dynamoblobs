@@ -837,17 +837,15 @@ class DynamoBlob extends HTMLElement {
       const maxX = pw - w + insetX;
       const minY = -insetY;
       const maxY = ph - h + insetY;
-      // On a wall hit, reflect and scale velocity by drift intensity
-      // (restitution): 1 is perfectly elastic, <1 damps, >1 energizes.
-      if (this.driftPosX > maxX || this.driftPosX < minX) {
-        this.driftVelX = -this.driftVelX * this.driftIntensity;
-        this.driftPosX = Math.max(minX, Math.min(this.driftPosX, maxX));
-        this._clampDriftSpeed();
-      }
-      if (this.driftPosY > maxY || this.driftPosY < minY) {
-        this.driftVelY = -this.driftVelY * this.driftIntensity;
-        this.driftPosY = Math.max(minY, Math.min(this.driftPosY, maxY));
-        this._clampDriftSpeed();
+      // On a wall hit, bounce. drift-intensity reshapes the bounce *angle*
+      // (speed is preserved) — see _bounceOffWalls. Detect the hit(s) first so a
+      // corner reflects off both walls in a single, combined bounce.
+      const hitX = this.driftPosX > maxX || this.driftPosX < minX;
+      const hitY = this.driftPosY > maxY || this.driftPosY < minY;
+      if (hitX || hitY) {
+        this._bounceOffWalls(hitX, hitY);
+        if (hitX) this.driftPosX = Math.max(minX, Math.min(this.driftPosX, maxX));
+        if (hitY) this.driftPosY = Math.max(minY, Math.min(this.driftPosY, maxY));
       }
       this.style.transform = `translate3d(${this.driftPosX}px, ${this.driftPosY}px, 0)`;
       this.driftFrameId = requestAnimationFrame(step);
@@ -856,11 +854,66 @@ class DynamoBlob extends HTMLElement {
     this._reflectState();
   }
 
-  // Keep an energized bounce (intensity > 1) from running away to infinity.
-  _clampDriftSpeed() {
-    const cap = Math.max(0.5, this.driftSpeed * 0.1 * 4);
-    this.driftVelX = Math.max(-cap, Math.min(cap, this.driftVelX));
-    this.driftVelY = Math.max(-cap, Math.min(cap, this.driftVelY));
+  // Reflect the velocity off the wall(s) just struck, then let drift-intensity
+  // reshape the bounce ANGLE — speed is preserved (tuning the pace is
+  // drift-speed's job).
+  //
+  // The bounce angle is read from the wall's inward normal: 0 leaves
+  // perpendicular (the most extreme deflection), ±90° skims along the wall (the
+  // shallowest). A clean mirror leaves at the angle it arrived. drift-intensity
+  // tunes that angle, with the random spread scaled by its distance from 1:
+  //   • 1   → the clean mirror angle, identical every bounce.
+  //   • >1  → biased steep + randomized → sharp, varied "extreme" ricochets.
+  //   • <1  → biased shallow + randomized → grazing "shallow" skims.
+  // The effect saturates by ~0 and ~2 (further out adds nothing).
+  _bounceOffWalls(hitX, hitY) {
+    let vx = this.driftVelX;
+    let vy = this.driftVelY;
+    const speed = Math.hypot(vx, vy) || this.driftSpeed * 0.1;
+    // Mirror reflection: flip whichever component faces a wall we hit.
+    if (hitX) vx = -vx;
+    if (hitY) vy = -vy;
+
+    const k = this.driftIntensity - 1;
+    if (!k) {
+      // intensity 1: a plain elastic mirror bounce, every time.
+      this.driftVelX = vx;
+      this.driftVelY = vy;
+      return;
+    }
+
+    // Inward normal points back into the field along the reflected axis; a
+    // corner hit averages both walls into one diagonal normal. The tangent runs
+    // along the wall.
+    let nx = hitX ? Math.sign(vx) : 0;
+    let ny = hitY ? Math.sign(vy) : 0;
+    const nlen = Math.hypot(nx, ny) || 1;
+    nx /= nlen;
+    ny /= nlen;
+    const tx = -ny;
+    const ty = nx;
+
+    // Split the mirror bounce into its normal part (>= 0 — it always leaves the
+    // wall) and signed tangential part, then read the bounce angle off the normal.
+    const vn = Math.abs(vx * nx + vy * ny);
+    const vt = vx * tx + vy * ty;
+    const phiMirror = Math.atan2(vt, vn); // (-pi/2, pi/2)
+
+    // |k| sets how much randomness; the sign sets the flavour — >1 steepens
+    // toward the normal (extreme), <1 flattens toward the wall (shallow).
+    const amt = Math.min(Math.abs(k), 1);
+    const LIMIT = Math.PI / 2 - 0.12; // never fully parallel, or it'd never leave
+    const graze = Math.sign(vt) || (Math.random() < 0.5 ? 1 : -1);
+    const target = k > 0 ? 0 : graze * LIMIT; // steep vs grazing
+    let phi = phiMirror + (target - phiMirror) * amt; // bias toward the flavour
+    phi += (Math.random() * 2 - 1) * amt * (Math.PI / 2); // random scatter
+    phi = Math.max(-LIMIT, Math.min(LIMIT, phi));
+
+    // Rebuild the velocity from the reshaped angle, preserving speed.
+    const vnOut = Math.cos(phi) * speed;
+    const vtOut = Math.sin(phi) * speed;
+    this.driftVelX = nx * vnOut + tx * vtOut;
+    this.driftVelY = ny * vnOut + ty * vtOut;
   }
 
   initDrift() {
@@ -957,9 +1010,23 @@ class DynamoBlob extends HTMLElement {
     this._reflectState();
   }
 
+  // Click deflect: redirect the drifting blob. drift-intensity tunes how sharply
+  // it turns from its current heading — the same extremity scale as a wall bounce:
+  //   • 1   → a fully random new direction (turn spread evenly over the circle).
+  //   • >1  → biased toward a hard reversal → extreme, sharp redirects.
+  //   • <1  → biased toward the current heading → shallow nudges (→ 0 turns none).
+  // Speed is preserved; only the angle changes.
   deflect() {
-    const speed = this.driftSpeed * 0.1;
-    const angle = Math.random() * 2 * Math.PI;
+    const speed = Math.hypot(this.driftVelX, this.driftVelY) || this.driftSpeed * 0.1;
+    const heading =
+      this.driftVelX || this.driftVelY
+        ? Math.atan2(this.driftVelY, this.driftVelX)
+        : Math.random() * 2 * Math.PI;
+    // Turn magnitude away from the heading: 0 keeps going straight, π reverses.
+    // The intensity exponent skews the random pick — >1 toward π (reverse), <1
+    // toward 0 (straight on); at 1 it stays uniform, i.e. a fully random heading.
+    const turn = Math.pow(Math.random(), 1 / this.driftIntensity) * Math.PI;
+    const angle = heading + (Math.random() < 0.5 ? 1 : -1) * turn;
     this.driftVelX = Math.cos(angle) * speed;
     this.driftVelY = Math.sin(angle) * speed;
   }

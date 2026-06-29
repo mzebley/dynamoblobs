@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **`data-blob-drift-intensity` now shapes the deflection angle, not speed.** It tunes how
+  extreme a deflection is — both when the blob hits a wall and on a `data-blob-drift-click` —
+  while leaving speed untouched (that stays `data-blob-drift-speed`). At a wall, `1` is a
+  clean mirror bounce, `>1` randomizes sharp, steep ricochets, and `<1` randomizes shallow,
+  grazing skims; the random spread grows with the value's distance from `1` and saturates by
+  ~`0` and ~`2`. A click deflect follows the same scale: `1` is a fully random new heading,
+  `>1` snaps toward a hard reversal, and `<1` only nudges off the current heading. Corner
+  hits reflect off both walls in a single combined bounce.
+
 ## [2.0.1] - 2026-06-29
 
 ### Fixed

@@ -95,7 +95,7 @@ All three motion layers share one naming pattern: `data-blob-<layer>-autoplay` (
 | `data-blob-drift-autoplay` | `false` | Start drifting on render (suppressed under reduced motion). |
 | `data-blob-is-drifting` | reflects state | Set `false` to pause in place, `true` to play. Mirrors `.isDrifting`. |
 | `data-blob-drift-speed` | `1.25` | Drift velocity. |
-| `data-blob-drift-intensity` | `1` | Bounce restitution at the walls: `1` is perfectly elastic, `<1` damps, `>1` energizes. |
+| `data-blob-drift-intensity` | `1` | Extremity of the deflection *angle* — at the walls and on a `data-blob-drift-click` (speed is unchanged — that's `data-blob-drift-speed`). `1` is a clean mirror bounce / fully random click; `>1` randomizes sharp, steep "extreme" ricochets and snaps clicks toward a hard reversal; `<1` randomizes shallow, grazing skims and nudges. The effect grows with distance from `1` and saturates by ~`0` and ~`2`. |
 | `data-blob-drift-bias` | `0.9` | How close the bounce hugs the wall. `<1` lets the blob carry slightly past before reversing; `>1` bounces sooner. Clamped to `0.5`–`1.5`. |
 | `data-blob-drift-click` | `false` | Deflect to a new direction on click. |
 | `data-blob-drift-start-position` | `random` | Where drift begins: `random` (scattered), `center`, or `current` (continues from the element's laid-out position — no teleport). |
