@@ -60,6 +60,7 @@ declare class DynamoBlob extends HTMLElement {
   private morphIntensity: number;
   private driftSpeed: number;
   private driftIntensity: number;
+  private driftBias: number;
   private svg: SVGSVGElement;
   private path: SVGPathElement;
 
@@ -159,6 +160,7 @@ interface DynamoBlobAttributes {
   'data-blob-is-drifting'?: string;
   'data-blob-drift-speed'?: string;
   'data-blob-drift-intensity'?: string;
+  'data-blob-drift-bias'?: string;
   'data-blob-drift-click'?: string;
   'data-blob-drift-start-position'?: 'random' | 'center' | 'current';
 

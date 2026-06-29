@@ -24,6 +24,15 @@ const VIEW = 100;
 const CENTER = VIEW / 2;
 const BASE_RADIUS = 30; // leaves headroom for variance + wobble inside 0..100
 
+// Multiplier on the drift-collision radius (data-blob-drift-bias). The boundary
+// is the blob's average silhouette radius; the default shrinks it slightly so the
+// blob carries a touch *past* the wall before bouncing (the wobble's scale
+// breathes the silhouette to ~0.9, so this keeps contact centred in that breath).
+// Below 1 leans further past; above 1 bounces sooner. Clamped to a sane range.
+const DRIFT_BIAS_DEFAULT = 0.9;
+const DRIFT_BIAS_MIN = 0.5;
+const DRIFT_BIAS_MAX = 1.5;
+
 const STYLE_ID = "dynamoblobs-styles";
 
 const BLOB_CSS = `
@@ -140,6 +149,7 @@ class DynamoBlob extends HTMLElement {
       "data-blob-is-wobbling",
       "data-blob-drift-speed",
       "data-blob-drift-intensity",
+      "data-blob-drift-bias",
       "data-blob-drift-autoplay",
       "data-blob-drift-click",
       "data-blob-drift-start-position",
@@ -160,6 +170,10 @@ class DynamoBlob extends HTMLElement {
     this.currentPath = null;
     this.targetPath = null;
     this.pendingPath = null;
+    // Frozen fraction (0..1) through the current tween when paused, so a resume
+    // continues seamlessly; the duration the active tween was started with.
+    this._morphProgress = 0;
+    this._morphDuration = 0;
 
     // Wobble state (CSS-driven; this is the intended play/pause).
     this._wobbling = false;
@@ -171,8 +185,12 @@ class DynamoBlob extends HTMLElement {
     this.driftVelX = 0;
     this.driftVelY = 0;
     this.driftInitialized = false;
-    this._driftInset = null; // measured padding between host box and visible blob
+    this._driftInset = null; // padding between host box and the collision boundary
     this._driftInsetTick = 0;
+    // Tunes how close drift bounces to the wall (data-blob-drift-bias). The
+    // boundary is a rotation-invariant radius from the path geometry (stable under
+    // the CSS wobble), scaled by this.
+    this.driftBias = DRIFT_BIAS_DEFAULT;
 
     this.intersectionObserver = null;
     this.random = Math.random;
@@ -335,6 +353,10 @@ class DynamoBlob extends HTMLElement {
       case "data-blob-drift-intensity":
         this._readConfig();
         break;
+      case "data-blob-drift-bias":
+        this._readConfig();
+        this._driftInsetTick = 0; // re-measure with the new bias next frame
+        break;
       case "data-blob-wobble-speed":
       case "data-blob-wobble-intensity":
         this._applyWobbleVars();
@@ -427,6 +449,11 @@ class DynamoBlob extends HTMLElement {
       ? Math.max(0, driftIntensityAttr)
       : 1;
 
+    const biasAttr = parseFloat(this.getAttribute("data-blob-drift-bias"));
+    this.driftBias = Number.isFinite(biasAttr)
+      ? Math.max(DRIFT_BIAS_MIN, Math.min(DRIFT_BIAS_MAX, biasAttr))
+      : DRIFT_BIAS_DEFAULT;
+
     // Seed: a decodable path reproduces an exact shape; any other non-empty
     // string deterministically drives generation; otherwise it's random.
     const seedAttr = this.getAttribute("data-blob-seed");
@@ -505,17 +532,26 @@ class DynamoBlob extends HTMLElement {
   _retuneShape() {
     if (!this.path) return;
     const target = this._seedPath || this.generatePathString();
-    if (this._morphing) {
-      this.targetPath = target;
-      this.pendingPath = null;
-      return;
-    }
+    // A retune redefines the shape baseline, so any frozen morph tween is stale.
+    this._morphProgress = 0;
+    // Re-baseline from what's actually on screen so rapid changes redirect
+    // smoothly — and so both tween endpoints stay valid paths (a null target
+    // would interpolate to an empty "d" and blank the blob mid-morph).
     this.currentPath = this.path.getAttribute("d") || this.currentPath;
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     this.animationFrameId = null;
     this.elapsedTime = 0;
     this.startTime = null;
     this.targetPath = target;
+    this.pendingPath = null;
+
+    if (this._morphing) {
+      // Redirect the live morph toward the retuned shape from the current frame,
+      // then keep the loop running at the configured morph speed.
+      this._morphLoop();
+      return;
+    }
+
     const dur = prefersReducedMotion() ? 0 : this.morphMs;
     if (dur <= 0) {
       this.currentPath = target;
@@ -605,24 +641,43 @@ class DynamoBlob extends HTMLElement {
     if (this._morphing) return;
     this._morphing = true;
     this._reflectState();
-    const duration = customDuration || this.speed;
+    this._morphDuration = customDuration || this.speed;
 
-    // Baseline the first target off the current shape so even the opening
-    // cycle obeys the intensity-driven magnitude.
-    this.targetPath = this.nextMorphTarget(this.currentPath);
+    // A non-morph tween may be in flight (e.g. a retune snap); supersede it so
+    // two loops don't write to the same path.
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
 
-    const loop = () => {
-      if (!this.pendingPath) this.pendingPath = this.nextMorphTarget(this.targetPath);
-      this.animateBlob(duration, () => {
-        this.currentPath = this.targetPath;
-        this.updateSeedAttribute(this.currentPath);
-        this.targetPath = this.pendingPath;
-        this.pendingPath = this.nextMorphTarget(this.targetPath);
-        if (this._morphing) loop();
-      });
-    };
+    if (this._morphProgress > 0 && this.currentPath && this.targetPath) {
+      // Resume a tween frozen by pauseMorph at the exact same progress, so the
+      // restart is seamless and survives a morph-speed change while paused.
+      this.elapsedTime = this._morphProgress * this._morphDuration;
+    } else {
+      // Fresh start: baseline the first target off the current shape so even the
+      // opening cycle obeys the intensity-driven magnitude.
+      this.elapsedTime = 0;
+      this.targetPath = this.nextMorphTarget(this.currentPath);
+      this.pendingPath = null;
+    }
+    this.startTime = null;
+    this._morphProgress = 0;
 
-    loop();
+    this._morphLoop();
+  }
+
+  // One morph cycle: tween currentPath -> targetPath, then advance the ring
+  // (current <- target <- pending) and recurse while still morphing.
+  _morphLoop() {
+    if (!this.pendingPath) this.pendingPath = this.nextMorphTarget(this.targetPath);
+    this.animateBlob(this._morphDuration, () => {
+      this.currentPath = this.targetPath;
+      this.updateSeedAttribute(this.currentPath);
+      this.targetPath = this.pendingPath;
+      this.pendingPath = this.nextMorphTarget(this.targetPath);
+      if (this._morphing) this._morphLoop();
+    });
   }
 
   pauseMorph() {
@@ -633,7 +688,15 @@ class DynamoBlob extends HTMLElement {
     this._morphing = false;
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     this.animationFrameId = null;
-    this.elapsedTime += performance.now() - (this.startTime || performance.now());
+    // Freeze the tween as a fraction of its duration (not raw ms), so resume is
+    // seamless even if the morph speed changes meanwhile. startTime already folds
+    // in any prior elapsedTime, so read it directly — never accumulate, or
+    // repeated pause/resume double-counts and the morph leaps forward.
+    if (this.startTime != null && this._morphDuration > 0) {
+      const elapsed = performance.now() - this.startTime;
+      this._morphProgress = Math.max(0, Math.min(elapsed / this._morphDuration, 1));
+    }
+    this.elapsedTime = 0;
     this.startTime = null;
     this._reflectState();
   }
@@ -685,10 +748,10 @@ class DynamoBlob extends HTMLElement {
       const progress = Math.min(elapsed / duration, 1);
 
       if (this.path) {
-        this.path.setAttribute(
-          "d",
-          interpolateBlob(startPoints, endPoints, easeInOutCubic(progress)),
-        );
+        const d = interpolateBlob(startPoints, endPoints, easeInOutCubic(progress));
+        // Only write a real path — never blank the blob if a silhouette is
+        // momentarily missing (the tween still completes and self-heals).
+        if (d) this.path.setAttribute("d", d);
       }
 
       if (progress < 1) {
@@ -757,13 +820,14 @@ class DynamoBlob extends HTMLElement {
       this.driftPosX += this.driftVelX;
       this.driftPosY += this.driftVelY;
       const { w, h, pw, ph } = this.driftBounds();
-      // Bounce off the blob's *visible* extent, not the host box. The silhouette
-      // fills only the middle of the box (transparent headroom for variance +
-      // wobble), so we let the box overhang the walls by that padding. Measured
-      // from the rendered geometry (so it tracks variance, morph, and wobble)
-      // and refreshed every few frames — it changes slowly, so this stays cheap.
+      // Bounce off the blob's silhouette, not the host box. The shape fills only
+      // the middle of the box (transparent headroom for variance + wobble), so we
+      // let the box overhang the walls by that padding. The boundary is a
+      // rotation-invariant radius derived from the path geometry, so the CSS
+      // wobble can spin/skew/scale without ever moving the bounce. Refreshed every
+      // few frames — it changes slowly (only with morph), so this stays cheap.
       if (this._driftInsetTick <= 0) {
-        this._driftInset = this.measureDriftInset();
+        this._driftInset = this.measureDriftInset(w, h);
         this._driftInsetTick = 10;
       }
       this._driftInsetTick--;
@@ -833,24 +897,58 @@ class DynamoBlob extends HTMLElement {
     };
   }
 
-  // Measure the transparent padding between the host box and the rendered blob
-  // (in px), averaged per axis. Uses the live bounding rects, so it reflects the
-  // actual silhouette including variance, morph, and the CSS wobble — whatever
-  // the blob currently looks like. Returns { x: 0, y: 0 } when unmeasurable.
-  measureDriftInset() {
-    if (!this.path || typeof this.path.getBoundingClientRect !== "function") {
-      return { x: 0, y: 0 };
+  // The mean collision radius in viewBox units — a rotation-invariant scalar
+  // taken from the un-wobbled path geometry (the CSS wobble lives on ancestor
+  // elements, so the path's own coordinates ignore it), so the bounce never
+  // breathes with the spin.
+  //
+  // Crucially this samples the *rendered curve*, not the parsed vertices. Each
+  // vertex is a quadratic control point and the silhouette passes through the
+  // edge midpoints, so it sits inside the vertex ring — measuring the vertices
+  // overestimates the radius and the blob bounces well short of the wall.
+  _driftCollisionRadius() {
+    const pts = parseBlobPath(this.path ? this.path.getAttribute("d") : "");
+    const n = pts.length;
+    if (!n) return BASE_RADIUS;
+    // t=0 is the edge midpoint (shared with the previous segment, so counted
+    // once); 0.25/0.5/0.75 walk the bulge toward the control point.
+    const ts = [0, 0.25, 0.5, 0.75];
+    let sum = 0;
+    let count = 0;
+    for (let i = 0; i < n; i++) {
+      const cur = pts[i];
+      const prev = pts[(i - 1 + n) % n];
+      const next = pts[(i + 1) % n];
+      const m0x = (prev.x + cur.x) / 2;
+      const m0y = (prev.y + cur.y) / 2;
+      const m1x = (cur.x + next.x) / 2;
+      const m1y = (cur.y + next.y) / 2;
+      for (const t of ts) {
+        const u = 1 - t;
+        const x = u * u * m0x + 2 * u * t * cur.x + t * t * m1x;
+        const y = u * u * m0y + 2 * u * t * cur.y + t * t * m1y;
+        sum += Math.hypot(x - CENTER, y - CENTER);
+        count++;
+      }
     }
-    const host = this.getBoundingClientRect();
-    const blob = this.path.getBoundingClientRect();
-    if (!host.width || !host.height || !blob.width || !blob.height) {
-      return { x: 0, y: 0 };
-    }
-    // Both rects include the drift translate, so these differences are
-    // translate-invariant — pure padding inside the box.
-    const x = Math.max(0, ((blob.left - host.left) + (host.right - blob.right)) / 2);
-    const y = Math.max(0, ((blob.top - host.top) + (host.bottom - blob.bottom)) / 2);
-    return { x, y };
+    return sum / count;
+  }
+
+  // The transparent padding (px) between the host box and the collision boundary,
+  // per axis. Derived from the stable collision radius (scaled by drift-bias), so
+  // the wobble never makes it breathe — no layout reads, just arithmetic. Returns
+  // { x: 0, y: 0 } when unmeasurable.
+  measureDriftInset(w = this.offsetWidth, h = this.offsetHeight) {
+    if (!w || !h) return { x: 0, y: 0 };
+    // viewBox is square with preserveAspectRatio "meet", so it renders as a
+    // min(w,h) square centred in the host box: `scale` px per unit, plus any
+    // letterbox on the longer axis. The blob sits centred, radius*scale wide.
+    const scale = Math.min(w, h) / VIEW;
+    const ring = scale * (CENTER - this._driftCollisionRadius() * this.driftBias);
+    return {
+      x: Math.max(0, ring + (w - scale * VIEW) / 2),
+      y: Math.max(0, ring + (h - scale * VIEW) / 2),
+    };
   }
 
   stopDrift() {

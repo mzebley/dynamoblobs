@@ -147,6 +147,7 @@ Set **```data-blob-drift-autoplay```** and the blob bounces around its nearest *
         <tr><td><p>data-blob-is-drifting</p></td><td>reflects state</td><td>true, false</td></tr>
         <tr><td><p>data-blob-drift-speed</p></td><td>1.25</td><td>Any positive number</td></tr>
         <tr><td><p>data-blob-drift-intensity</p></td><td>1</td><td>Bounce restitution: 1 elastic, &lt;1 damps, &gt;1 energizes</td></tr>
+        <tr><td><p style="min-width:max-content;">data-blob-drift-bias</p></td><td>0.9</td><td>Wall-hug tightness: &lt;1 carries past, &gt;1 bounces sooner (0.5–1.5)</td></tr>
         <tr><td><p>data-blob-drift-click</p></td><td>false</td><td>true, false</td></tr>
         <tr><td><p style="min-width:max-content;">data-blob-drift-start-position</p></td><td>random</td><td>random, center, current</td></tr>
     </tbody>

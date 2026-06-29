@@ -96,6 +96,7 @@ All three motion layers share one naming pattern: `data-blob-<layer>-autoplay` (
 | `data-blob-is-drifting` | reflects state | Set `false` to pause in place, `true` to play. Mirrors `.isDrifting`. |
 | `data-blob-drift-speed` | `1.25` | Drift velocity. |
 | `data-blob-drift-intensity` | `1` | Bounce restitution at the walls: `1` is perfectly elastic, `<1` damps, `>1` energizes. |
+| `data-blob-drift-bias` | `0.9` | How close the bounce hugs the wall. `<1` lets the blob carry slightly past before reversing; `>1` bounces sooner. Clamped to `0.5`–`1.5`. |
 | `data-blob-drift-click` | `false` | Deflect to a new direction on click. |
 | `data-blob-drift-start-position` | `random` | Where drift begins: `random` (scattered), `center`, or `current` (continues from the element's laid-out position — no teleport). |
 
@@ -163,7 +164,7 @@ Drift translates the element within its nearest **positioned, sized** ancestor (
 
 By default each blob starts drifting from a random spot, which scatters an ambient field nicely. For a single, centered blob, that random jump is jarring — set `data-blob-drift-start-position="current"` so it continues from where it's already laid out (no teleport), or `"center"` to begin from the container's middle.
 
-Drift bounces off the blob's **visible silhouette**, not the host element's box. Since the silhouette fills only the middle of that box (the rest is transparent headroom for variance + wobble), the blob meets the walls cleanly with no early-bounce gap. The transparent box overhangs the container edges as it does so, so give the drift container `overflow: clip` (or `hidden`).
+Drift bounces off the blob's **silhouette**, not the host element's box. The boundary is a rotation-invariant radius sampled from the rendered path, so the CSS wobble (spin / skew / scale) never makes the bounce drift early or jitter. Since the silhouette fills only the middle of that box (the rest is transparent headroom for variance + wobble), the blob meets the walls cleanly with no early-bounce gap. The transparent box overhangs the container edges as it does so, so give the drift container `overflow: clip` (or `hidden`). Tune how tightly it hugs the wall with `data-blob-drift-bias` (default `0.9` lets it carry a touch past before reversing).
 
 ## Reduced motion
 

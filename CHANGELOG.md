@@ -4,6 +4,30 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-06-29
+
+### Fixed
+- **Morph could blank the blob.** Changing `data-blob-points` / `data-blob-variance`
+  mid-morph left a `null` target in the loop, which interpolated to an empty path and
+  made the blob vanish for a cycle or two. Retunes now re-baseline from the on-screen
+  shape and redirect the live morph toward the new silhouette; `animateBlob` also never
+  writes an empty path as a safety net.
+- **Pause/resume morph jumped.** Resuming regenerated the target and double-counted
+  elapsed time, so the shape leapt forward (worse the longer the pause). Resume now
+  continues the frozen tween at the exact same progress (and survives a morph-speed
+  change while paused).
+
+### Changed
+- **Drift collision rewritten.** The bounce now uses a rotation-invariant radius sampled
+  from the rendered path curve (not the wobbled `getBoundingClientRect`, and not the
+  Bézier control points), so it no longer breathes with the CSS wobble or bounces short.
+  No per-frame layout reads.
+
+### Added
+- `data-blob-drift-bias` (default `0.9`, clamped `0.5`–`1.5`) — scales the drift
+  collision radius to tune how tightly the bounce hugs the wall; the default lets the
+  blob carry a touch past before reversing.
+
 ## [2.0.0] - 2026-06-28
 
 ### Changed

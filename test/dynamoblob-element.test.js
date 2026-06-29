@@ -328,3 +328,74 @@ describe('write-back guard (no attributeChangedCallback feedback loop)', () => {
     assert.equal(el._writingState.size, 0);
   });
 });
+
+describe('drift collision boundary', () => {
+  // A square ring of vertices at radius R from the centre (50,50). The endpoint
+  // numbers after each control point are irrelevant to parsing. The vertices are
+  // Bezier control points, so the rendered curve passes through the edge
+  // midpoints and sits *inside* this ring — the measured radius is < R.
+  const ringPath = (r) =>
+    `M 0,0 Q ${50 + r},50 0,0 Q 50,${50 + r} 0,0 Q ${50 - r},50 0,0 Q 50,${50 - r} 0,0 Z`;
+
+  // Recover the collision radius (viewBox units) from a square-host inset.
+  const VIEW_UNITS = 100;
+  const CENTER = 50;
+  const radiusFromInset = (inset, box) => CENTER - inset.x / (box / VIEW_UNITS);
+
+  it('samples the rendered curve, not the vertex ring', () => {
+    const el = makeBlob();
+    el.path.setAttribute('d', ringPath(30));
+    // The curve passes through the edge midpoints and bulges only partway to the
+    // vertices, so the true radius is strictly inside the 30-unit vertex ring and
+    // outside the midpoint floor (30*cos45). Measuring the vertices is what made
+    // it bounce short.
+    const r = el._driftCollisionRadius();
+    assert.ok(r < 30, `expected curve radius < 30, got ${r}`);
+    assert.ok(r > 30 * Math.cos(Math.PI / 4), `radius below midpoint floor: ${r}`);
+  });
+
+  it('shrinks the boundary by the default 0.9 bias (carries slightly past)', () => {
+    const el = makeBlob();
+    assert.equal(el.driftBias, 0.9);
+    el.path.setAttribute('d', ringPath(30));
+    const raw = el._driftCollisionRadius();
+    const inset = el.measureDriftInset(200, 200);
+
+    assert.equal(inset.x, inset.y); // symmetric ring
+    const effective = radiusFromInset(inset, 200);
+    assert.ok(Math.abs(effective - raw * 0.9) < 1e-9, `effective ${effective} != 0.9*${raw}`);
+    assert.ok(effective < raw); // smaller boundary -> box travels further before bouncing
+  });
+
+  it('data-blob-drift-bias overrides the boundary scale', () => {
+    const el = makeBlob({ 'data-blob-drift-bias': '0.75' });
+    assert.equal(el.driftBias, 0.75);
+    el.path.setAttribute('d', ringPath(30));
+    const raw = el._driftCollisionRadius();
+    const effective = radiusFromInset(el.measureDriftInset(200, 200), 200);
+    assert.ok(Math.abs(effective - raw * 0.75) < 1e-9, `effective ${effective} != 0.75*${raw}`);
+  });
+
+  it('clamps an out-of-range bias to the supported window', () => {
+    assert.equal(makeBlob({ 'data-blob-drift-bias': '9' }).driftBias, 1.5);
+    assert.equal(makeBlob({ 'data-blob-drift-bias': '0' }).driftBias, 0.5);
+  });
+
+  it('accounts for letterboxing on a non-square host', () => {
+    const el = makeBlob();
+    el.path.setAttribute('d', ringPath(30));
+    // 300x200: scale 2 (meet), same radial ring on both axes; x picks up the
+    // extra (300 - 200)/2 = 50 of horizontal letterbox.
+    const inset = el.measureDriftInset(300, 200);
+    assert.ok(Math.abs(inset.x - inset.y - 50) < 1e-9);
+  });
+
+  it('is invariant to the CSS wobble transform (uses geometry, not the rect)', () => {
+    const el = makeBlob();
+    el.path.setAttribute('d', ringPath(30));
+    const before = el.measureDriftInset(200, 200);
+    // The wobble lives on this ancestor; the geometric measure must ignore it.
+    el.querySelector('.dynamo-blob__turn').style.transform = 'rotate(37deg) scale(0.8)';
+    assert.deepEqual(el.measureDriftInset(200, 200), before);
+  });
+});
