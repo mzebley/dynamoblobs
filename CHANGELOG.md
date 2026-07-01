@@ -4,6 +4,46 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Control methods chain.** `play`, `pause`, `playWobble`/`pauseWobble`,
+  `playMorph`/`pauseMorph`, `playDrift`/`pauseDrift`, `startDrift`/`stopDrift`,
+  `generateNewBlob`, and `deflect` all return the element:
+  `blob.pauseWobble().playMorph().playDrift(2)`.
+
+### Fixed
+- **`data-blob-observe` is now reactive like every other attribute.** It was read once at
+  connect: setting it after render silently did nothing, removing it didn't stop the
+  viewport-triggered regeneration, and changing the mode or root margin kept the stale
+  observer. Setting, changing, or removing the attribute now applies live.
+- **Reactive shape attributes were no-ops.** The element's own `data-blob-seed` write-back
+  was read back as a user seed on the next config read, so every retune targeted the shape
+  already on screen — changing `data-blob-points` / `data-blob-variance` after render did
+  nothing. The write-back is no longer treated as a seed; user seeds still win.
+- **`generateNewBlob` (and `data-blob-observe`) could get permanently blocked.** A completed
+  retune tween left a stale animation-frame id behind that read as "tween in flight" forever;
+  a retune or `playMorph` superseding an in-flight shuffle also left `isGeneratingBlob` wedged.
+  Tween completion and every cancel path now reset both. The first shuffle after a retune is
+  also no longer a visual no-op (it used to tween to the shape already on screen).
+- **Moving the element in the DOM killed its play state.** Disconnect paused morph/drift and
+  stamped `data-blob-is-*="false"`, which the reconnect read as an explicit user "off" —
+  re-parenting silently stopped autoplay layers. Reconnect now resumes whatever was playing,
+  keeps paused layers paused, and preserves the current silhouette.
+- **`data-blob-seed` could smuggle markup into the DOM.** The decoded seed was interpolated
+  into `innerHTML` with only a `startsWith("M")` check, so a crafted seed could inject live
+  elements (XSS if seeds come from untrusted input). The path `d` is now set via
+  `setAttribute` (inert), and decoded seeds must match a strict path allowlist — which also
+  stops innocent string seeds that happen to base64-decode to `M…` (e.g. `TWFyaw` → `Mark`)
+  from rendering as a broken literal path.
+- **Non-positive morph durations no longer loop forever.** A negative `data-blob-morph-speed`
+  (or `playMorph` duration) made tween progress never reach 1, spinning an rAF loop that
+  never advanced; durations are now clamped to a 1ms minimum.
+
+### Changed
+- The inner `<svg>` no longer copies the host's `id` (which created duplicate ids in the
+  document); it now renders without an `id`.
+
 ## [0.9.0] - 2026-06-29
 
 ### Changed

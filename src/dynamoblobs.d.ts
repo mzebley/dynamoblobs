@@ -84,36 +84,39 @@ declare class DynamoBlob extends HTMLElement {
    * Resume the layers the blob is configured to auto-play. A key in `options`
    * forces that layer on (and tunes it) regardless of its auto-play flag.
    * Ignores `prefers-reduced-motion`.
+   *
+   * All control methods return the element, so calls chain:
+   * `blob.pauseWobble().playMorph().playDrift(2)`.
    */
-  play(options?: BlobPlayOptions): void;
+  play(options?: BlobPlayOptions): this;
   /** Freeze wobble, morph, and drift in place. */
-  pause(): void;
+  pause(): this;
   /** Resume the ambient CSS wobble; optional period in milliseconds. */
-  playWobble(durationMs?: number): void;
+  playWobble(durationMs?: number): this;
   /** Freeze the wobble at its current position. */
-  pauseWobble(): void;
+  pauseWobble(): this;
   /** Start the continuous morph loop; optional per-cycle duration in milliseconds. */
-  playMorph(customDuration?: number | null): void;
+  playMorph(customDuration?: number | null): this;
   /** Pause the morph loop. */
-  pauseMorph(): void;
+  pauseMorph(): this;
   /** Resume drift; optional speed multiplier (same scale as data-blob-drift-speed). */
-  playDrift(speed?: number): void;
+  playDrift(speed?: number): this;
   /** Freeze drift in place (keeps position). */
-  pauseDrift(): void;
+  pauseDrift(): this;
   /** Regenerate once and morph to the new silhouette. */
-  generateNewBlob(duration?: number): void;
+  generateNewBlob(duration?: number): this;
   /** Give the drifting blob a random velocity impulse. */
-  deflect(): void;
+  deflect(): this;
 
   private generatePathString(): string;
   private nextMorphTarget(fromPath: string): string;
   private animateBlob(duration: number, onComplete?: (() => void) | null): void;
   private updateSeedAttribute(pathString: string): void;
   private setupIntersectionObserver(observeConfig: string): void;
-  private startDrift(): void;
+  private startDrift(): this;
   private initDrift(): void;
   private driftBounds(): { w: number; h: number; pw: number; ph: number };
-  private stopDrift(): void;
+  private stopDrift(): this;
 }
 
 declare function generateBlobPath(options: BlobGenerationOptions): string;

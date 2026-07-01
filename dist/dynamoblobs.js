@@ -39,6 +39,13 @@
   const DRIFT_BIAS_MIN = 0.5;
   const DRIFT_BIAS_MAX = 1.5;
 
+  // The only path shape the element ever emits or accepts as a decoded seed:
+  // "M x,y Q cx,cy x,y … Z". Anything else that happens to base64-decode (e.g. a
+  // plain-string seed like "TWFyaw" -> "Mark") is treated as a string seed, and
+  // the strict character allowlist keeps a hostile seed from ever reaching the
+  // DOM as markup.
+  const SEED_PATH_RE = /^M[0-9\s.,eE+-]+(?:Q[0-9\s.,eE+-]+)+Z$/;
+
   const STYLE_ID = "dynamoblobs-styles";
 
   const BLOB_CSS = `
@@ -137,6 +144,7 @@
         "data-blob-points",
         "data-blob-variance",
         "data-blob-seed",
+        "data-blob-observe",
         "data-blob-morph-tween",
         "data-blob-morph-speed",
         "data-blob-morph-intensity",
@@ -240,14 +248,14 @@
       this.classList.add("dynamo-blob-host");
       this.setAttribute("aria-hidden", "true");
 
-      const id = this.id || Math.random().toString(36).slice(2, 8);
-
       this._readConfig();
 
-      // Initial silhouettes
-      this.currentPath = this._seedPath || this.generatePathString();
+      // Initial silhouettes. On a reconnect (the element was moved in the DOM)
+      // keep the previous paths so the silhouette survives the move; a user seed
+      // still wins.
+      this.currentPath = this._seedPath || this.currentPath || this.generatePathString();
       this.updateSeedAttribute(this.currentPath);
-      this.targetPath = this.generatePathString();
+      if (!this.targetPath) this.targetPath = this.generatePathString();
 
       this.innerHTML = `
       <div class="dynamo-blob__turn">
@@ -257,22 +265,23 @@
           preserveAspectRatio="xMidYMid meet"
           aria-hidden="true"
           role="presentation"
-          id="${id}"
         >
           <g class="dynamo-blob__scale">
-            <path class="dynamo-blob__path" d="${this.currentPath}"></path>
+            <path class="dynamo-blob__path"></path>
           </g>
         </svg>
       </div>
     `;
       this.svg = this.querySelector("svg");
       this.path = this.querySelector("path");
+      // "d" is set as an attribute, never through innerHTML: a decoded
+      // data-blob-seed is outside input and must stay inert data, not markup.
+      this.path.setAttribute("d", this.currentPath);
 
       this._applyClick();
 
       // Viewport-triggered regeneration
-      const observeAttr = this.getAttribute("data-blob-observe");
-      if (observeAttr) this.setupIntersectionObserver(observeAttr);
+      this._applyObserve();
 
       // Decide each layer's initial play state. An explicit data-blob-is-<layer>ing
       // wins; otherwise the layer auto-plays per its -autoplay flag, unless the
@@ -394,6 +403,9 @@
         case "data-blob-drift-click":
           this._applyClick();
           break;
+        case "data-blob-observe":
+          this._applyObserve();
+          break;
         case "data-blob-is-wobbling":
           if (newValue === "false") this.pauseWobble();
           else this.playWobble();
@@ -430,7 +442,10 @@
       const varianceAttr = parseFloat(this.getAttribute("data-blob-variance"));
       this.variance = Number.isFinite(varianceAttr) ? varianceAttr : 8;
 
-      this.speed = parseFloat(this.getAttribute("data-blob-morph-speed")) || 7500;
+      // Must be strictly positive — a zero/negative duration would make the
+      // tween's progress never reach 1 (an rAF loop that never completes).
+      const speedAttr = parseFloat(this.getAttribute("data-blob-morph-speed"));
+      this.speed = Number.isFinite(speedAttr) && speedAttr > 0 ? speedAttr : 7500;
 
       const tweenAttr = parseFloat(this.getAttribute("data-blob-morph-tween"));
       this.morphMs = Number.isFinite(tweenAttr) ? tweenAttr : 600;
@@ -453,15 +468,18 @@
         ? Math.max(DRIFT_BIAS_MIN, Math.min(DRIFT_BIAS_MAX, biasAttr))
         : DRIFT_BIAS_DEFAULT;
 
-      // Seed: a decodable path reproduces an exact shape; any other non-empty
-      // string deterministically drives generation; otherwise it's random.
+      // Seed: a user-provided decodable path reproduces an exact shape; any other
+      // non-empty user string deterministically drives generation. The element's
+      // own write-back (updateSeedAttribute) is *not* a seed — treating it as one
+      // would make every retune target the shape already on screen, turning the
+      // reactive shape attributes (points / variance) into no-ops.
       const seedAttr = this.getAttribute("data-blob-seed");
       const hasSeed = typeof seedAttr === "string" && seedAttr.trim() !== "";
       this._hasUserSeed = hasSeed && seedAttr !== this._writingSeed;
-      if (hasSeed) {
+      if (this._hasUserSeed) {
         const decoded = decodeBlobSeed(seedAttr);
-        if (decoded && decoded.trim().startsWith("M")) {
-          this._seedPath = decoded;
+        if (decoded && SEED_PATH_RE.test(decoded.trim())) {
+          this._seedPath = decoded.trim();
           this.seedString = null;
         } else {
           this._seedPath = null;
@@ -498,6 +516,12 @@
     // Mirror live play/pause state to the data-blob-is-* attributes. Guarded so
     // the resulting attributeChangedCallback is ignored (no feedback loop).
     _reflectState() {
+      // Don't stamp state until connectedCallback has finished deciding it. A
+      // setup-time reflect would write partial state (e.g. is-drifting="false"
+      // before drift starts) that _initialLayerState then reads back as an
+      // explicit "off", suppressing that layer's autoplay. The connect path runs
+      // one _reflectState() at the end, which captures the real combined state.
+      if (!this._connected) return;
       this._reflect("data-blob-is-wobbling", this.isWobbling);
       this._reflect("data-blob-is-morphing", this.isMorphing);
       this._reflect("data-blob-is-drifting", this.isDrifting);
@@ -510,6 +534,17 @@
       this._writingState.add(name);
       this.setAttribute(name, value);
       this._writingState.delete(name);
+    }
+
+    // (Re)build the viewport observer from data-blob-observe. Setting, changing,
+    // or removing the attribute applies live; removal stops the regeneration.
+    _applyObserve() {
+      if (this.intersectionObserver) {
+        this.intersectionObserver.disconnect();
+        this.intersectionObserver = null;
+      }
+      const config = this.getAttribute("data-blob-observe");
+      if (config) this.setupIntersectionObserver(config);
     }
 
     _applyClick() {
@@ -539,6 +574,7 @@
       this.currentPath = this.path.getAttribute("d") || this.currentPath;
       if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
+      this.isGeneratingBlob = false; // an in-flight generateNewBlob is superseded
       this.elapsedTime = 0;
       this.startTime = null;
       this.targetPath = target;
@@ -565,8 +601,18 @@
     }
 
     disconnectedCallback() {
+      // Clear the connected flag first: the pauses below must not stamp "false"
+      // into the data-blob-is-* attributes, or a reconnect (the element being
+      // moved in the DOM) would read them back as an explicit user "off" and
+      // never resume that layer's play state.
+      this._connected = false;
       this.pauseMorph();
       this.stopDrift();
+      // Kill any non-morph tween (retune / generateNewBlob) so it can't keep
+      // writing to the torn-down DOM or leave isGeneratingBlob wedged.
+      if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+      this.isGeneratingBlob = false;
       this.removeEventListener("click", this._onClick);
       if (this.intersectionObserver) {
         this.intersectionObserver.disconnect();
@@ -595,6 +641,9 @@
     }
 
     // --- unified controls ---------------------------------------------------
+    // Every control method returns the element so calls chain, e.g.
+    // blob.pauseWobble().playMorph().playDrift(2).
+    //
     // Resume the layers the blob is configured to auto-play. An options key
     // *forces* that layer on (and tunes it). Durations are in ms (morph, wobble);
     // drift takes a speed multiplier. Explicit play ignores prefers-reduced-motion
@@ -610,6 +659,7 @@
       if (opts.drift != null || this._boolAttr("data-blob-drift-autoplay", false)) {
         this.playDrift(opts.drift);
       }
+      return this;
     }
 
     // Freeze all three layers in place.
@@ -617,6 +667,7 @@
       this.pauseWobble();
       this.pauseMorph();
       this.pauseDrift();
+      return this;
     }
 
     // --- wobble (CSS) -------------------------------------------------------
@@ -627,27 +678,30 @@
       }
       this._wobbling = true;
       this._reflectState();
+      return this;
     }
 
     // Freeze the wobble at its current position (animation-play-state: paused).
     pauseWobble() {
       this._wobbling = false;
       this._reflectState();
+      return this;
     }
 
     // --- morph loop ---------------------------------------------------------
     playMorph(customDuration = null) {
-      if (this._morphing) return;
+      if (this._morphing) return this;
       this._morphing = true;
       this._reflectState();
-      this._morphDuration = customDuration || this.speed;
+      this._morphDuration = Math.max(1, customDuration || this.speed);
 
-      // A non-morph tween may be in flight (e.g. a retune snap); supersede it so
-      // two loops don't write to the same path.
+      // A non-morph tween may be in flight (e.g. a retune snap or a
+      // generateNewBlob); supersede it so two loops don't write to the same path.
       if (this.animationFrameId) {
         cancelAnimationFrame(this.animationFrameId);
         this.animationFrameId = null;
       }
+      this.isGeneratingBlob = false;
 
       if (this._morphProgress > 0 && this.currentPath && this.targetPath) {
         // Resume a tween frozen by pauseMorph at the exact same progress, so the
@@ -664,6 +718,7 @@
       this._morphProgress = 0;
 
       this._morphLoop();
+      return this;
     }
 
     // One morph cycle: tween currentPath -> targetPath, then advance the ring
@@ -682,7 +737,7 @@
     pauseMorph() {
       if (!this._morphing) {
         this._reflectState();
-        return;
+        return this;
       }
       this._morphing = false;
       if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
@@ -698,6 +753,7 @@
       this.elapsedTime = 0;
       this.startTime = null;
       this._reflectState();
+      return this;
     }
 
     // --- drift --------------------------------------------------------------
@@ -713,19 +769,24 @@
           this.driftVelY *= ratio;
         }
       }
-      this.startDrift();
+      return this.startDrift();
     }
 
     // Freeze drift in place (keeps position; resumes from here).
     pauseDrift() {
-      this.stopDrift();
+      return this.stopDrift();
     }
 
     // One-shot regenerate + morph (analogous to a manual shuffle).
     generateNewBlob(duration = 800) {
-      if (this.isGeneratingBlob || this.animationFrameId) return;
+      if (this.isGeneratingBlob || this.animationFrameId) return this;
       if (duration < 1) duration = 1;
       this.isGeneratingBlob = true;
+      // The shuffle tweens to the pre-generated target. A completed retune or
+      // snap leaves current === target; regenerate so the shuffle is visible.
+      if (this.currentPath === this.targetPath) {
+        this.targetPath = this.generatePathString();
+      }
       this.pendingPath = this.generatePathString();
       this.animateBlob(duration, () => {
         this.currentPath = this.targetPath;
@@ -733,11 +794,12 @@
         this.pendingPath = null;
         this.updateSeedAttribute(this.currentPath);
         this.isGeneratingBlob = false;
-        this.animationFrameId = null;
       });
+      return this;
     }
 
     animateBlob(duration, onComplete = null) {
+      if (!(duration >= 1)) duration = 1; // NaN/negative would never reach progress 1
       const startPoints = parseBlobPath(this.currentPath);
       const endPoints = parseBlobPath(this.targetPath);
 
@@ -756,6 +818,10 @@
         if (progress < 1) {
           this.animationFrameId = requestAnimationFrame(animate);
         } else {
+          // Clear the frame id before onComplete (which may start a new tween) —
+          // a stale id here read as "a tween is running" and permanently blocked
+          // generateNewBlob and the data-blob-observe regeneration.
+          this.animationFrameId = null;
           this.elapsedTime = 0;
           this.startTime = null;
           if (onComplete) onComplete();
@@ -810,7 +876,7 @@
 
     // --- drift ("DVD"-style bounce) -----------------------------------------
     startDrift() {
-      if (this.driftFrameId) return;
+      if (this.driftFrameId) return this;
       // Initialise before going absolute so a "current" start can read the
       // element's laid-out position (offsetLeft/Top) while it's still in flow.
       if (!this.driftInitialized) this.initDrift();
@@ -851,6 +917,7 @@
       };
       this.driftFrameId = requestAnimationFrame(step);
       this._reflectState();
+      return this;
     }
 
     // Reflect the velocity off the wall(s) just struck, then let drift-intensity
@@ -1007,6 +1074,7 @@
       if (this.driftFrameId) cancelAnimationFrame(this.driftFrameId);
       this.driftFrameId = null;
       this._reflectState();
+      return this;
     }
 
     // Click deflect: redirect the drifting blob. drift-intensity tunes how sharply
@@ -1028,6 +1096,7 @@
       const angle = heading + (Math.random() < 0.5 ? 1 : -1) * turn;
       this.driftVelX = Math.cos(angle) * speed;
       this.driftVelY = Math.sin(angle) * speed;
+      return this;
     }
   }
 
