@@ -139,6 +139,12 @@ blob.isAnimating;         // boolean — true when any layer is playing
 
 `play()` resumes the layers the blob is configured to auto-play (`data-blob-wobble-autoplay`, `data-blob-morph-autoplay`, `data-blob-drift-autoplay`). Passing a key in the options object forces that layer on regardless. Explicit play methods ignore `prefers-reduced-motion`; the declarative auto-play paths still honor it.
 
+Every control method returns the element, so calls chain:
+
+```js
+blob.pauseWobble().playMorph().playDrift(2);
+```
+
 The pure generators are exported too, for SSR, canvas, or custom pipelines:
 
 ```ts

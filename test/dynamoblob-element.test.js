@@ -12,6 +12,7 @@ import { JSDOM } from 'jsdom';
 // Flipped per test to drive prefers-reduced-motion through the matchMedia mock.
 let reducedMotion = false;
 let DynamoBlob;
+let parseBlobPath;
 let document;
 
 before(async () => {
@@ -35,6 +36,26 @@ before(async () => {
   globalThis.requestAnimationFrame = () => ++rafId;
   globalThis.cancelAnimationFrame = () => {};
 
+  // Minimal IntersectionObserver mock (jsdom has none) — records its config and
+  // whether it was disconnected, so the data-blob-observe tests can assert the
+  // observer lifecycle without a real viewport.
+  class MockIntersectionObserver {
+    constructor(callback, options) {
+      this.callback = callback;
+      this.options = options;
+      this.observed = [];
+      this.disconnected = false;
+    }
+    observe(target) {
+      this.observed.push(target);
+    }
+    disconnect() {
+      this.disconnected = true;
+    }
+  }
+  window.IntersectionObserver = MockIntersectionObserver;
+  globalThis.IntersectionObserver = MockIntersectionObserver;
+
   // Configurable prefers-reduced-motion (jsdom has no matchMedia by default).
   window.matchMedia = (query) => ({
     matches: query.includes('prefers-reduced-motion') ? reducedMotion : false,
@@ -49,7 +70,7 @@ before(async () => {
     },
   });
 
-  ({ DynamoBlob } = await import('../src/dynamoblobs.js'));
+  ({ DynamoBlob, parseBlobPath } = await import('../src/dynamoblobs.js'));
   document = window.document;
 });
 
@@ -67,6 +88,7 @@ after(() => {
   delete globalThis.CustomEvent;
   delete globalThis.requestAnimationFrame;
   delete globalThis.cancelAnimationFrame;
+  delete globalThis.IntersectionObserver;
 });
 
 // Create a connected <dynamo-blob> with the given attributes applied before
@@ -337,6 +359,145 @@ describe('write-back guard (no attributeChangedCallback feedback loop)', () => {
     assert.equal(el.isMorphing, false);
     assert.equal(el.isDrifting, false);
     assert.equal(el._writingState.size, 0);
+  });
+});
+
+describe('data-blob-observe is reactive', () => {
+  it('creates the observer when the attribute is set after connect', () => {
+    const el = makeBlob();
+    assert.equal(el.intersectionObserver, null);
+
+    el.setAttribute('data-blob-observe', 'continuous:32px');
+    assert.ok(el.intersectionObserver, 'observer was not created');
+    assert.equal(el.intersectionObserver.options.rootMargin, '32px');
+    assert.deepEqual(el.intersectionObserver.observed, [el]);
+  });
+
+  it('removing the attribute disconnects the observer', () => {
+    const el = makeBlob({ 'data-blob-observe': 'continuous:0px' });
+    const observer = el.intersectionObserver;
+    assert.ok(observer);
+
+    el.removeAttribute('data-blob-observe');
+    assert.equal(observer.disconnected, true);
+    assert.equal(el.intersectionObserver, null);
+  });
+
+  it('changing the config replaces the observer', () => {
+    const el = makeBlob({ 'data-blob-observe': 'once:0px' });
+    const first = el.intersectionObserver;
+
+    el.setAttribute('data-blob-observe', 'continuous:64px');
+    assert.equal(first.disconnected, true);
+    assert.notEqual(el.intersectionObserver, first);
+    assert.equal(el.intersectionObserver.options.rootMargin, '64px');
+  });
+});
+
+describe('control methods chain', () => {
+  it('every control method returns the element', () => {
+    const el = makeBlob();
+    for (const method of [
+      'play', 'pause',
+      'playWobble', 'pauseWobble',
+      'playMorph', 'pauseMorph',
+      'playDrift', 'pauseDrift',
+      'startDrift', 'stopDrift',
+      'generateNewBlob', 'deflect',
+    ]) {
+      assert.equal(el[method](), el, `${method}() did not return the element`);
+    }
+  });
+
+  it('a chained sequence lands on the expected combined state', () => {
+    const el = makeBlob();
+    el.pauseWobble().playMorph().playDrift(2);
+    assert.equal(el.isWobbling, false);
+    assert.equal(el.isMorphing, true);
+    assert.equal(el.isDrifting, true);
+  });
+});
+
+describe('seed handling', () => {
+  it('reproduces an exact shape from an encoded path seed', () => {
+    const first = makeBlob();
+    const d = first.path.getAttribute('d');
+    const seed = first.getAttribute('data-blob-seed'); // auto-written encoding
+    const clone = makeBlob({ 'data-blob-seed': seed });
+    assert.equal(clone.path.getAttribute('d'), d);
+  });
+
+  it('regenerates when data-blob-points changes (the auto-written seed is not a shape lock)', () => {
+    // Regression: the element's own seed write-back was read back as a user
+    // seed, so every retune targeted the shape already on screen and the
+    // reactive shape attributes did nothing.
+    const el = makeBlob({ 'data-blob-morph-tween': '0' });
+    assert.equal(parseBlobPath(el.path.getAttribute('d')).length, 10);
+
+    el.setAttribute('data-blob-points', '5');
+    assert.equal(parseBlobPath(el.path.getAttribute('d')).length, 5);
+  });
+
+  it('never parses a hostile decoded seed as markup', () => {
+    const payload = 'M 1,1"><img id="pwn" src=x onerror=alert(1)>';
+    const seed = Buffer.from(payload, 'utf8').toString('base64').replace(/=+$/, '');
+    const el = makeBlob({ 'data-blob-seed': seed });
+    assert.equal(el.querySelector('img'), null);
+    // Falls back to treating the attribute as a plain string seed.
+    assert.ok(parseBlobPath(el.path.getAttribute('d')).length >= 3);
+  });
+
+  it('treats a decodable-but-not-a-path seed as a plain string seed', () => {
+    // "TWFyaw" is valid base64 for "Mark" — it must drive generation, not be
+    // rendered as the (broken) literal path d="Mark".
+    const el = makeBlob({ 'data-blob-seed': 'TWFyaw' });
+    const d = el.path.getAttribute('d');
+    assert.notEqual(d, 'Mark');
+    assert.ok(parseBlobPath(d).length >= 3);
+  });
+});
+
+describe('moving the element in the DOM (disconnect + reconnect)', () => {
+  it('keeps playing layers playing across a re-parent', () => {
+    // Regression: disconnect paused morph/drift and reflected is-*="false",
+    // which the reconnect then read as an explicit user "off".
+    const el = makeBlob({
+      'data-blob-morph-autoplay': 'true',
+      'data-blob-drift-autoplay': 'true',
+    });
+    assert.equal(el.isMorphing, true);
+    assert.equal(el.isDrifting, true);
+
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    div.appendChild(el); // disconnect + reconnect
+
+    assert.equal(el.isWobbling, true);
+    assert.equal(el.isMorphing, true);
+    assert.equal(el.isDrifting, true);
+  });
+
+  it('keeps a deliberately paused layer paused across a re-parent', () => {
+    const el = makeBlob({ 'data-blob-morph-autoplay': 'true' });
+    el.pauseMorph();
+
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    div.appendChild(el);
+
+    assert.equal(el.isMorphing, false);
+    assert.equal(el.isWobbling, true); // untouched layer still resumes
+  });
+
+  it('keeps the same silhouette across a re-parent', () => {
+    const el = makeBlob();
+    const d = el.path.getAttribute('d');
+
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    div.appendChild(el);
+
+    assert.equal(el.path.getAttribute('d'), d);
   });
 });
 

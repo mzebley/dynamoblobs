@@ -135,6 +135,65 @@ describe('retuning shape mid-morph', () => {
   });
 });
 
+describe('tween lifecycle bookkeeping', () => {
+  it('changing data-blob-points morphs to the new vertex count', () => {
+    // Regression: the auto-written data-blob-seed was read back as a user seed,
+    // so the retune targeted the on-screen shape and points changes were no-ops.
+    const el = makeBlob({ 'data-blob-points': '10' });
+    assert.equal(countPts(el.path.getAttribute('d')), 10);
+
+    el.setAttribute('data-blob-points', '5');
+    for (let i = 0; i < 60; i++) frame(16); // complete the 600ms retune tween
+    assert.equal(countPts(el.path.getAttribute('d')), 5);
+  });
+
+  it('generateNewBlob still works after a retune tween completes', () => {
+    // Regression: animateBlob left a stale animationFrameId behind on
+    // completion, which generateNewBlob read as "tween in flight" forever.
+    const el = makeBlob();
+    el.setAttribute('data-blob-variance', '4'); // retune tween (600ms)
+    for (let i = 0; i < 60; i++) frame(16);
+    assert.equal(el.animationFrameId, null);
+
+    const before = el.path.getAttribute('d');
+    el.generateNewBlob(100);
+    assert.ok(el.isGeneratingBlob, 'generateNewBlob was blocked by a stale frame id');
+    for (let i = 0; i < 20; i++) frame(16);
+    assert.equal(el.isGeneratingBlob, false);
+    // ...and it must be a *visible* shuffle, not a tween to the same shape
+    // (a completed retune leaves currentPath === targetPath).
+    assert.notEqual(el.path.getAttribute('d'), before);
+  });
+
+  it('a retune superseding an in-flight generateNewBlob does not wedge it', () => {
+    const el = makeBlob();
+    el.generateNewBlob(500);
+    frame(16); // mid-tween
+    el.setAttribute('data-blob-variance', '3'); // supersedes the tween
+    assert.equal(el.isGeneratingBlob, false);
+
+    for (let i = 0; i < 60; i++) frame(16); // let the retune tween finish
+    el.generateNewBlob(100);
+    assert.ok(el.isGeneratingBlob, 'generateNewBlob stayed wedged after being superseded');
+    for (let i = 0; i < 20; i++) frame(16);
+  });
+
+  it('clamps a non-positive morph duration instead of looping forever', () => {
+    const el = makeBlob();
+    el.playMorph(-100);
+    // Each 1ms (clamped) cycle takes two frames: one to establish startTime,
+    // one to complete. A negative duration used to make progress never reach 1,
+    // so the loop would spin without ever advancing the shape.
+    frame(16);
+    frame(16); // first cycle completes
+    assert.ok(el.isMorphing);
+    const d1 = el.path.getAttribute('d');
+    frame(16);
+    frame(16); // second cycle completes -> a new silhouette
+    assert.notEqual(el.path.getAttribute('d'), d1);
+  });
+});
+
 describe('pause / resume continuity', () => {
   it('resumes the exact frozen frame regardless of pause duration', () => {
     const el = makeBlob({
