@@ -50,6 +50,6 @@
     "rollup-plugin-dts": "^6.1.1"
   },
   "dependencies": {
-    "zebkit": "github:mzebley/zebkit"
+    "zebkit": "npm:@mzebley/zebkit@0.8.1"
   }
 }
