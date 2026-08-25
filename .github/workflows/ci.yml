@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  branch_policy:
+    name: Branch policy
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate PR route and release contract
+        env:
+          RELEASE_BASE_BRANCH: ${{ github.base_ref }}
+          RELEASE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          RELEASE_HEAD_BRANCH: ${{ github.head_ref }}
+          RELEASE_PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/release/check-branch-policy.mjs
+
+  verify:
+    name: Verify
+    if: always() && (github.event_name != 'pull_request' || needs.branch_policy.result == 'success')
+    needs: branch_policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node and private dependency registry
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.14.0
+          cache: npm
+          cache-dependency-path: package-lock.json
+          registry-url: https://npm.pkg.github.com
+          scope: '@mzebley'
+
+      - name: Install lifecycle-safe npm
+        run: npm install --global "npm@>=11.5.1 <12"
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm ci --ignore-scripts
+
+      - name: Run the release gate
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run gate
+
+      - name: Reject generated drift
+        run: npm run check:generated
+
+      - name: Pack the stable release candidate
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/v')
+        run: |
+          node scripts/release/pack-package.mjs release-artifacts
+          node scripts/release/check-package.mjs release-artifacts/pack.json
+
+      - name: Upload the stable release candidate
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/v')
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-candidate-${{ github.event.pull_request.head.sha }}
+          path: release-artifacts/
+          if-no-files-found: error
+          retention-days: 30

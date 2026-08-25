@@ -4,6 +4,40 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Release-candidate and production pipelines now enforce the first-public-release contract, upload inspected tarballs, publish npm and GitHub Package variants, and finalize immutable GitHub releases.
+- Release checks keep package metadata, generated bundles, the README, installation examples, and the documented public API synchronized.
+
+### Changed
+- `generateNewBlob()` now retargets from the exact rendered silhouette and, when called during continuous morphing, hands the generated points back to the still-running loop without a jump or dropped request.
+- Click deflection exposes the host as a named button with pointer, <kbd>Enter</kbd>, and <kbd>Space</kbd> activation; ordinary decorative blobs remain hidden from assistive technology.
+- Package declarations now distinguish ESM and CommonJS consumers, while UMD files remain available for classic direct-script loading.
+- npm keeps the canonical unscoped `dynamoblobs` name; GitHub Packages receives the required `@mzebley/dynamoblobs` scoped mirror from the same release commit.
+- Automated npm publishing is token-free: the first candidate is bootstrapped interactively, then subsequent releases require trusted publishing through OIDC.
+- The blocking release gate now keeps browser-heavy Zebkit rendered verification explicit instead of repeating the full matrix for every PR and publish job.
+
+### Fixed
+- Corrected the documented attribute count, runtime defaults, readable-seed behavior, and morph-tween meaning.
+- Dark-theme highlighted code now uses a matching dark code canvas, and unupgraded code listings contain their own narrow-screen overflow.
+- The package now ships its MIT license text and runs the complete release gate before publication.
+- The Live controls demo now exposes wobble as its own pressed-state control instead of leaving the default ambient motion unexplained.
+
+## [0.10.0] - 2026-08-23
+
+### Added
+- ESM/CommonJS conditional root exports, retained direct-script exports, and durable package-export parity coverage.
+- A prerendered SvelteKit documentation application with mdsvex content, Shiki code blocks, live blob controls, and preserved legacy anchors.
+
+### Changed
+- Migrated documentation from the mark-down pipeline to SvelteKit 5, Vite, TypeScript, and static Vercel build output.
+- Delivered Zebkit 0.16.1 generated tokens/runtime, responsive navigation, theme and type-size controls, and modern Rollup UMD/ESM/CommonJS outputs.
+
+### Fixed
+- Importing the module during SSR no longer requires DOM globals.
+- Legacy documentation hashes continue to resolve through retained IDs or explicit mappings.
+
 ## [0.9.1] - 2026-07-01
 
 ### Added
@@ -80,7 +114,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Drift collision rewritten.** The bounce now uses a rotation-invariant radius sampled
   from the rendered path curve (not the wobbled `getBoundingClientRect`, and not the
   Bézier control points), so it no longer breathes with the CSS wobble or bounces short.
-  No per-frame layout reads.
+  It avoids per-frame path bounding-box reads.
 
 ### Added
 - `data-blob-drift-bias` (default `0.9`, clamped `0.5`–`1.5`) — scales the drift

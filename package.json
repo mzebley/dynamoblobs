@@ -1,29 +1,57 @@
 {
   "name": "dynamoblobs",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "type": "module",
   "description": "Lightweight, dependency-free generative SVG blobs that wobble, morph, and drift — delivered as a drop-in custom element.",
-  "main": "dist/dynamoblobs.js",
-  "module": "dist/dynamoblobs.js",
-  "types": "dist/dynamoblobs.d.ts",
+  "sideEffects": true,
+  "main": "./dist/dynamoblobs.cjs",
+  "module": "./dist/dynamoblobs.esm.js",
+  "types": "./dist/dynamoblobs.d.mts",
+  "unpkg": "./dist/dynamoblobs.min.js",
+  "jsdelivr": "./dist/dynamoblobs.min.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/dynamoblobs.d.mts",
+        "default": "./dist/dynamoblobs.esm.js"
+      },
+      "require": {
+        "types": "./dist/dynamoblobs.d.cts",
+        "default": "./dist/dynamoblobs.cjs"
+      },
+      "default": "./dist/dynamoblobs.esm.js"
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
-    "test": "node --test",
+    "test": "node --test test/*.test.js",
+    "test:release": "node --test scripts/release/*.test.mjs",
     "build": "rollup -c",
-    "prepare": "rollup -c",
-    "prepublishOnly": "npm run build",
-    "release": "npm publish",
-    "release:dry": "npm run build && npm pack --dry-run",
-    "docs:manifest": "mark-down build www/snippets --output www/snippets/snippets-index.json",
-    "docs:manifest:watch": "mark-down watch www/snippets --output www/snippets/snippets-index.json",
-    "docs:build": "npm run docs:manifest && mark-down compile-page www-src/index.html --manifest www/snippets/snippets-index.json --outDir www",
-    "docs:watch": "chokidar \"www-src/index.html\" \"www/snippets/**/*.md\" -c \"npm run docs:build\""
+    "dev:docs": "vite dev",
+    "build:docs": "npm run build && zebkit build && vite build",
+    "check:docs": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && node scripts/check-zebkit.mjs",
+    "preview:docs": "vite preview",
+    "verify:docs": "zebkit verify --url http://localhost:4173",
+    "verify:rendered": "node scripts/verify-rendered.mjs",
+    "verify:release": "npm run gate && npm run verify:rendered",
+    "check:package": "publint && attw --pack .",
+    "check:docs-contract": "node scripts/release/check-docs.mjs",
+    "check:generated": "node scripts/release/check-generated.mjs",
+    "audit:production": "npm audit --omit=dev --registry=https://registry.npmjs.org/",
+    "gate": "npm test && npm run test:release && npm run build:docs && npm run check:docs && npm run check:docs-contract && npm run check:package && npm run audit:production && npm pack --dry-run",
+    "prepublishOnly": "npm run gate",
+    "release:prepare": "node scripts/release/prepare-release.mjs",
+    "release:pack": "node scripts/release/pack-package.mjs release-artifacts",
+    "release:dry": "npm run gate && npm run release:pack",
+    "docs:build": "npm run build:docs",
+    "docs:watch": "npm run dev:docs",
+    "check:zebkit": "node scripts/check-zebkit.mjs"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mzebley/dynamoblobs.git"
+    "url": "https://github.com/mzebley/dynamoblobs.git"
   },
   "keywords": [
     "javascript",
@@ -36,20 +64,33 @@
     "web-components"
   ],
   "author": "Mark Zebley",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/mzebley/dynamoblobs/issues"
   },
   "homepage": "https://dynamoblobs.markzebley.com/",
   "devDependencies": {
-    "@mzebley/mark-down-cli": "^1.2.2",
-    "@rollup/plugin-terser": "^0.4.4",
-    "chokidar-cli": "^3.0.0",
+    "@arethetypeswrong/cli": "0.18.5",
+    "@mzebley/zebkit": "0.16.1",
+    "@rollup/plugin-terser": "^1.0.0",
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.70.2",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@types/node": "^26.1.0",
     "jsdom": "^29.1.1",
-    "rollup": "^3.29.4",
-    "rollup-plugin-dts": "^6.1.1"
+    "mdsvex": "^0.12.8",
+    "playwright": "^1.62.1",
+    "publint": "0.3.24",
+    "rollup": "^4.62.4",
+    "rollup-plugin-dts": "^6.1.1",
+    "shiki": "^4.4.1",
+    "svelte": "^5.56.8",
+    "svelte-check": "^4.7.4",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.1",
+    "zebkit": "npm:@mzebley/zebkit@0.16.1"
   },
-  "dependencies": {
-    "zebkit": "npm:@mzebley/zebkit@0.8.1"
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

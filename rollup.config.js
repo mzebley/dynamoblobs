@@ -17,12 +17,8 @@ export default [
         name: 'Dynamoblobs',
         plugins: [terser()],
       },
-      {
-        file: 'www/dynamoblobs.min.js',
-        format: 'umd',
-        name: 'Dynamoblobs',
-        plugins: [terser()],
-      },
+      { file: 'dist/dynamoblobs.esm.js', format: 'es' },
+      { file: 'dist/dynamoblobs.cjs', format: 'cjs', exports: 'named' },
     ],
   },
   // Types bundle
@@ -31,6 +27,14 @@ export default [
     output: [
       {
         file: 'dist/dynamoblobs.d.ts',
+        format: 'es',
+      },
+      {
+        file: 'dist/dynamoblobs.d.mts',
+        format: 'es',
+      },
+      {
+        file: 'dist/dynamoblobs.d.cts',
         format: 'es',
       },
     ],

@@ -1,9 +1,29 @@
 {
+  "$schema": "./node_modules/zebkit/dist/editor/schemas/zebkit.config.schema.json",
+  "configVersion": 3,
   "tokens": {
-    "destinationPath": "./www",
+    "destinationPath": "./src/lib/styles",
     "assetFilePath": "/",
-    "theme": "dynamoblobs",
-    "customThemeName": "dynamoblobs",
-    "customTokenPath": "./tokens"
+    "extendedTokens": { "colors": "all", "breakpoints": true },
+    "prune": { "enabled": false, "content": ["./src/**/*.{html,js,md,svelte,ts}"], "safelist": ["/^zbk-code-block/"], "output": { "mode": "replace" }, "tokens": true, "report": true }
+  },
+  "theme": { "name": "dynamoblobs", "preset": "dynamowaves", "tokenPath": "./tokens", "overlays": [{ "name": "dark", "tokenPath": "./themes/dark" }] },
+  "components": {
+    "accordion": false, "badge": false, "breadcrumb": false, "card": false, "checkbox": false, "dialog": false, "disclosure": false, "input": false, "menu": false, "menu-item": false, "pagination": false, "panel": false, "popover": false, "radio": false, "select": false, "tag": false, "textarea": false, "toast": false, "toast-region": false, "tooltip": false,
+    "button": { "variants": ["ghost", "lg", "sm"] },
+    "code-block": { "options": { "tabsVariant": "code-block", "buttonVariant": "code-block-copy code-block-copy-size code-block-copy-motion" } },
+    "link": { "variants": ["subtle"] }, "tabs": { "variants": [] }, "toggle": { "variants": [] }
+  },
+  "context": { "path": "./zebkit/context" },
+  "check": { "content": ["./src/**/*.{html,js,md,svelte,ts}"] },
+  "runtime": { "delivery": "generated", "path": "./zebkit/zebkit.runtime.js" },
+  "accessibility": {
+    "inputPath": "./src/lib/styles/zebkit-a11y-input.json", "delivery": "auto",
+    "verify": {
+      "reportDirectory": ".zebkit/reports", "routes": [{ "id": "docs", "path": "/" }],
+      "viewports": [{ "id": "mobile", "width": 375, "height": 812 }, { "id": "desktop", "width": 1440, "height": 1000 }, { "id": "reflow", "width": 320, "height": 800, "reflow": true }],
+      "themes": [{ "id": "light", "selector": "html", "attribute": "data-zbk-theme" }, { "id": "dark", "selector": "html", "attribute": "data-zbk-theme", "value": "dark" }],
+      "scenarios": [{ "id": "blob-regenerated", "route": "docs", "actions": [{ "action": "click", "selector": "[data-blob-regenerate]" }] }, { "id": "transition-advanced", "route": "docs", "actions": [{ "action": "click", "selector": "[data-transition-next]" }] }]
+    }
   }
 }

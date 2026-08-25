@@ -1,0 +1,8 @@
+{
+  "name": "Dynamoblobs",
+  "short_name": "Dynamoblobs",
+  "icons": [],
+  "theme_color": "#c5d8d7",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
