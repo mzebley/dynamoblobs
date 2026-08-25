@@ -31,7 +31,7 @@
     "build": "rollup -c",
     "dev:docs": "vite dev",
     "build:docs": "npm run build && zebkit build && vite build",
-    "check:docs": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && zebkit check --format=json",
+    "check:docs": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && node scripts/check-zebkit.mjs",
     "preview:docs": "vite preview",
     "verify:docs": "zebkit verify --url http://localhost:4173",
     "verify:rendered": "node scripts/verify-rendered.mjs",
@@ -46,7 +46,7 @@
     "release:dry": "npm run gate && npm run release:pack",
     "docs:build": "npm run build:docs",
     "docs:watch": "npm run dev:docs",
-    "check:zebkit": "zebkit check --format=json"
+    "check:zebkit": "node scripts/check-zebkit.mjs"
   },
   "repository": {
     "type": "git",
