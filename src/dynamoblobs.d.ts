@@ -103,7 +103,10 @@ declare class DynamoBlob extends HTMLElement {
   playDrift(speed?: number): this;
   /** Freeze drift in place (keeps position). */
   pauseDrift(): this;
-  /** Regenerate once and morph to the new silhouette. */
+  /**
+   * Regenerate once from the visible silhouette. An active morph loop resumes
+   * seamlessly from the generated points. Reduced-motion mode completes in 1ms.
+   */
   generateNewBlob(duration?: number): this;
   /** Give the drifting blob a random velocity impulse. */
   deflect(): this;

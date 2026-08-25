@@ -112,6 +112,64 @@ describe('DynamoBlob is upgraded', () => {
     assert.equal(el.getAttribute('aria-hidden'), 'true');
     assert.ok(el.querySelector('svg path'));
   });
+
+  it('keeps drift positioning when a framework rewrites the authored class', () => {
+    const el = makeBlob();
+    el.className = 'demo-blob';
+
+    el.startDrift();
+
+    assert.ok(el.classList.contains('dynamo-blob--drift'));
+    assert.equal(window.getComputedStyle(el).position, 'absolute');
+  });
+
+  it('adopts an SSR snapshot without replacing framework hydration nodes', () => {
+    const el = document.createElement('dynamo-blob');
+    el.innerHTML = '<div class="dynamo-blob__turn"><svg class="dynamo-blob__skew"><g class="dynamo-blob__scale"><path class="dynamo-blob__path"></path></g></svg></div>';
+    const snapshotPath = el.querySelector('path');
+
+    document.body.appendChild(el);
+
+    assert.equal(el.path, snapshotPath);
+    assert.equal(el.querySelector('path'), snapshotPath);
+    assert.ok(snapshotPath.getAttribute('d'));
+  });
+
+  it('exposes click deflection as a named keyboard-operable button', () => {
+    const el = makeBlob({ 'data-blob-drift-click': 'true' });
+    let deflections = 0;
+    el.deflect = () => {
+      deflections++;
+      return el;
+    };
+
+    assert.equal(el.hasAttribute('aria-hidden'), false);
+    assert.equal(el.getAttribute('role'), 'button');
+    assert.equal(el.tabIndex, 0);
+    assert.equal(el.getAttribute('aria-label'), 'Deflect blob');
+
+    el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    el.dispatchEvent(new window.KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    assert.equal(deflections, 1, 'Space activated before keyup');
+    el.dispatchEvent(new window.KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+    el.click();
+    assert.equal(deflections, 3);
+  });
+
+  it('preserves an authored accessible name and removes only generated control defaults', () => {
+    const el = makeBlob({
+      'data-blob-drift-click': 'true',
+      'aria-label': 'Move the background blob',
+    });
+
+    assert.equal(el.getAttribute('aria-label'), 'Move the background blob');
+    el.setAttribute('data-blob-drift-click', 'false');
+
+    assert.equal(el.getAttribute('aria-label'), 'Move the background blob');
+    assert.equal(el.hasAttribute('role'), false);
+    assert.equal(el.hasAttribute('tabindex'), false);
+    assert.equal(el.getAttribute('aria-hidden'), 'true');
+  });
 });
 
 describe('state getters mirror the data-blob-is-* attributes', () => {
@@ -415,6 +473,66 @@ describe('control methods chain', () => {
     assert.equal(el.isWobbling, false);
     assert.equal(el.isMorphing, true);
     assert.equal(el.isDrifting, true);
+  });
+});
+
+describe('generation concurrency', () => {
+  it('retargets a live morph from the rendered frame and continues morphing', () => {
+    const el = makeBlob({ 'data-blob-morph-autoplay': 'true' });
+    const displayedPath = el.nextMorphTarget(el.currentPath);
+    const generatedPath = el.nextMorphTarget(displayedPath);
+    el.path.setAttribute('d', displayedPath);
+    el.generatePathString = () => generatedPath;
+
+    const originalRAF = globalThis.requestAnimationFrame;
+    const originalCancel = globalThis.cancelAnimationFrame;
+    let frameCallback = null;
+    let nextId = 100;
+    globalThis.requestAnimationFrame = (callback) => {
+      frameCallback = callback;
+      return ++nextId;
+    };
+    globalThis.cancelAnimationFrame = () => {};
+
+    try {
+      el.generateNewBlob(500);
+
+      assert.equal(el.isMorphing, true);
+      assert.equal(el.isGeneratingBlob, true);
+      assert.equal(el.currentPath, displayedPath);
+      assert.equal(el.targetPath, generatedPath);
+
+      const firstFrame = frameCallback;
+      firstFrame(1000);
+      assert.deepEqual(parseBlobPath(el.path.getAttribute('d')), parseBlobPath(displayedPath));
+
+      const completionFrame = frameCallback;
+      completionFrame(1501);
+
+      assert.equal(el.currentPath, generatedPath);
+      assert.equal(el.isGeneratingBlob, false);
+      assert.equal(el.isMorphing, true);
+      assert.notEqual(el.targetPath, generatedPath);
+      assert.equal(typeof frameCallback, 'function');
+      assert.ok(el.animationFrameId != null, 'continuous morph did not schedule its next frame');
+    } finally {
+      globalThis.requestAnimationFrame = originalRAF;
+      globalThis.cancelAnimationFrame = originalCancel;
+    }
+  });
+
+  it('pausing during a generated morph freezes the displayed silhouette cleanly', () => {
+    const el = makeBlob({ 'data-blob-morph-autoplay': 'true' });
+    el.generateNewBlob(500);
+    const displayedPath = el.path.getAttribute('d');
+
+    el.pauseMorph();
+
+    assert.equal(el.isMorphing, false);
+    assert.equal(el.isGeneratingBlob, false);
+    assert.equal(el.animationFrameId, null);
+    assert.equal(el.currentPath, displayedPath);
+    assert.equal(el.targetPath, displayedPath);
   });
 });
 

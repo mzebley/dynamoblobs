@@ -1,0 +1,62 @@
+{
+  "font-family": {
+    "$value": "{font-family.body}",
+    "$type": "fontFamily",
+    "$description": "Font family for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "font-size": {
+    "$value": "{font-size.lg}",
+    "$type": "cssDimension",
+    "$description": "Font size for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "font-weight": {
+    "$value": "{font-weight.normal}",
+    "$type": "fontWeight",
+    "$description": "Font weight for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "line-height": {
+    "$value": "{line-height.3}",
+    "$type": "number",
+    "$description": "Line height for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "letter-spacing": {
+    "$value": "{letter-spacing.normal}",
+    "$type": "dimension",
+    "$description": "Tracking for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "measure": {
+    "$value": "{text-measure.3}",
+    "$type": "cssDimension",
+    "$description": "Maximum inline measure for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "spacing-before": {
+    "$value": "{spacing.0}",
+    "$type": "dimension",
+    "$description": "Incoming spacing request when a lede follows another direct child in a .prose flow. The resolved gap is the larger of this spacing-before and the previous treatment's spacing-after, so structural hierarchy wins without relying on source order."
+  },
+  "spacing-after": {
+    "$value": "{spacing.105}",
+    "$type": "dimension",
+    "$description": "Outgoing spacing request contributed by a lede to the next direct child in a .prose flow. The resolved gap is the larger of this spacing-after and the next treatment's spacing-before; documented compound pairs may intentionally use the tighter outgoing gap."
+  },
+  "color": {
+    "$value": "{app.ink-muted}",
+    "$type": "color",
+    "$description": "Text color for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "font-style": {
+    "$value": "normal",
+    "$type": "fontStyle",
+    "$description": "Font style for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "text-transform": {
+    "$value": "none",
+    "$type": "textTransform",
+    "$description": "Text transform for introductory lede text with .lede applied directly or as a child of a .prose container."
+  },
+  "text-align": {
+    "$value": "start",
+    "$type": "textAlignment",
+    "$description": "Text alignment for introductory lede text with .lede applied directly or as a child of a .prose container."
+  }
+}

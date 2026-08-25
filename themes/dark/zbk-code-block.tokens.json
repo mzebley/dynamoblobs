@@ -1,0 +1,12 @@
+{
+  "canvas": {
+    "$value": "{app.canvas-muted}",
+    "$type": "color",
+    "$description": "Dark-mode code block frame background."
+  },
+  "code-canvas": {
+    "$value": "{color.global-black}",
+    "$type": "color",
+    "$description": "Dark-mode code listing background behind highlighted source."
+  }
+}

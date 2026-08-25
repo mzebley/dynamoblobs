@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title description">
+  <title id="title">A ceramic artist's sunlit studio</title>
+  <desc id="description">Warm shelves, handmade vessels, a worktable, and leafy plants beside a tall blue window.</desc>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3cf9f"/>
+      <stop offset="1" stop-color="#cf7656"/>
+    </linearGradient>
+    <linearGradient id="window" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#89cbd0"/>
+      <stop offset="1" stop-color="#d9ede0"/>
+    </linearGradient>
+    <linearGradient id="table" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#794132"/>
+      <stop offset="1" stop-color="#a95c3f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#wall)"/>
+  <path d="M0 650 1200 566v334H0z" fill="#633e37"/>
+  <rect x="736" y="72" width="352" height="468" rx="14" fill="#3d5557"/>
+  <rect x="760" y="96" width="304" height="420" rx="3" fill="url(#window)"/>
+  <path d="M912 96v420M760 302h304" stroke="#f4dfbc" stroke-width="16"/>
+  <circle cx="996" cy="160" r="56" fill="#f8d888" opacity=".8"/>
+  <path d="M736 540h352" stroke="#362f2d" stroke-width="26" stroke-linecap="round"/>
+  <g fill="none" stroke="#593a35" stroke-width="22" stroke-linecap="round">
+    <path d="M86 238h486"/>
+    <path d="M122 447h518"/>
+  </g>
+  <g>
+    <path d="M138 220c0-58 78-58 78 0v18h-78z" fill="#3a7069"/>
+    <path d="M266 238v-72c0-38 92-38 92 0v72z" fill="#e8a24d"/>
+    <path d="M403 238v-42c0-52 106-52 106 0v42z" fill="#7d4f74"/>
+    <path d="M176 447v-94c0-43 98-43 98 0v94z" fill="#f4c978"/>
+    <path d="M338 447v-61c0-59 114-59 114 0v61z" fill="#336f78"/>
+    <path d="M518 447v-110c0-32 68-32 68 0v110z" fill="#f1dfbc"/>
+  </g>
+  <g fill="none" stroke="#f7e9cf" stroke-width="8" opacity=".72">
+    <path d="M280 185h64"/>
+    <path d="M422 205c14-22 54-22 68 0"/>
+    <path d="M354 392h82"/>
+  </g>
+  <g transform="translate(66 527)">
+    <path d="M86 160C38 85 44 9 104-45c17 64 11 122-18 205Z" fill="#386d58"/>
+    <path d="M94 166c-4-76 28-143 94-178 0 74-30 129-94 178Z" fill="#4f8d68"/>
+    <path d="M88 169C32 133 2 77 4 10c61 34 90 87 84 159Z" fill="#80a45f"/>
+    <path d="M42 164h108l-18 111H60z" fill="#d38455"/>
+  </g>
+  <path d="M414 632h570l73 268H347z" fill="url(#table)"/>
+  <path d="M384 655h636" stroke="#c37b57" stroke-width="22" stroke-linecap="round"/>
+  <g transform="translate(570 510)">
+    <ellipse cx="116" cy="202" rx="136" ry="30" fill="#4b332f" opacity=".44"/>
+    <path d="M20 190c11-101 48-156 96-156s85 55 96 156Z" fill="#e6c79a"/>
+    <path d="M54 95c42 30 84 30 126 0" fill="none" stroke="#a5644d" stroke-width="9"/>
+    <path d="M66 55c32 19 68 19 100 0" fill="none" stroke="#a5644d" stroke-width="9"/>
+    <ellipse cx="116" cy="36" rx="49" ry="14" fill="#f4dfbd" stroke="#8c5947" stroke-width="8"/>
+  </g>
+  <g transform="translate(862 618)">
+    <path d="M34 103V20h92v83" fill="#4a8077"/>
+    <ellipse cx="80" cy="20" rx="46" ry="14" fill="#6ca092"/>
+    <path d="M20 103h120" stroke="#2e3938" stroke-width="12" stroke-linecap="round"/>
+    <path d="M80 5c-9-67 34-105 73-119-1 59-29 98-73 119Z" fill="#477755"/>
+    <path d="M77 5c-35-55-76-66-118-51 27 49 66 64 118 51Z" fill="#72934f"/>
+  </g>
+  <path d="M0 0h1200v900H0z" fill="none" stroke="#2f3031" stroke-width="28" opacity=".14"/>
+</svg>

@@ -1,0 +1,99 @@
+{
+  "canvas": {
+    "$value": "{color.lavenderfield-600}",
+    "$description": "Base action canvas color for primary surfaces."
+  },
+  "canvas-subtle": {
+    "$value": "{color.lavenderfield-50}",
+    "$description": "Subtle action canvas color for the least-prominent, lightly tinted surfaces."
+  },
+  "canvas-muted": {
+    "$value": "{color.lavenderfield-100}",
+    "$description": "Muted action canvas color for low-emphasis, recessed surfaces."
+  },
+  "canvas-emphasis": {
+    "$value": "{color.lavenderfield-800}",
+    "$description": "Emphasis action canvas color for high-prominence surfaces."
+  },
+  "canvas-inverse": {
+    "$value": "{color.lavenderfield-400}",
+    "$description": "Base inverse action canvas color for surfaces on dark or inverted contexts."
+  },
+  "canvas-inverse-subtle": {
+    "$value": "{color.lavenderfield-900}",
+    "$description": "Subtle inverse action canvas color for the least-prominent surfaces in inverse contexts."
+  },
+  "canvas-inverse-muted": {
+    "$value": "{color.lavenderfield-800}",
+    "$description": "Muted inverse action canvas color for low-emphasis surfaces in inverse contexts."
+  },
+  "canvas-inverse-emphasis": {
+    "$value": "{color.lavenderfield-300}",
+    "$description": "Emphasis inverse action canvas color for high-prominence surfaces in inverse contexts."
+  },
+  "ink": {
+    "$value": "{color.lavenderfield-700}",
+    "$description": "Base action ink color for body text and icons on neutral or light canvases."
+  },
+  "ink-subtle": {
+    "$value": "{color.lavenderfield-400}",
+    "$description": "Subtle action ink color for the least-prominent, tertiary text and icons."
+  },
+  "ink-muted": {
+    "$value": "{color.lavenderfield-500}",
+    "$description": "Muted action ink color for secondary text and icons."
+  },
+  "ink-emphasis": {
+    "$value": "{color.lavenderfield-900}",
+    "$description": "Emphasis action ink color for high-prominence text and icons."
+  },
+  "ink-inverse": {
+    "$value": "{color.lavenderfield-300}",
+    "$description": "Base inverse action ink color for body text and icons on inverse or dark canvases."
+  },
+  "ink-inverse-subtle": {
+    "$value": "{color.lavenderfield-500}",
+    "$description": "Subtle inverse action ink color for the least-prominent text and icons on inverse canvases."
+  },
+  "ink-inverse-muted": {
+    "$value": "{color.lavenderfield-400}",
+    "$description": "Muted inverse action ink color for secondary text and icons on inverse canvases."
+  },
+  "ink-inverse-emphasis": {
+    "$value": "{color.lavenderfield-50}",
+    "$description": "Emphasis inverse action ink color for high-prominence text on inverse canvases."
+  },
+  "border": {
+    "$value": "{color.lavenderfield-600}",
+    "$description": "Base action border color for outlines, strokes, and dividers."
+  },
+  "border-subtle": {
+    "$value": "{color.lavenderfield-100}",
+    "$description": "Subtle action border color for the least-prominent outlines and dividers."
+  },
+  "border-muted": {
+    "$value": "{color.lavenderfield-300}",
+    "$description": "Muted action border color for low-emphasis outlines and dividers."
+  },
+  "border-emphasis": {
+    "$value": "{color.lavenderfield-800}",
+    "$description": "Emphasis action border color for high-prominence outlines and dividers."
+  },
+  "border-inverse": {
+    "$value": "{color.lavenderfield-500}",
+    "$description": "Base inverse action border color for outlines and dividers on inverse canvases."
+  },
+  "border-inverse-subtle": {
+    "$value": "{color.lavenderfield-800}",
+    "$description": "Subtle inverse action border color for the least-prominent outlines on inverse canvases."
+  },
+  "border-inverse-muted": {
+    "$value": "{color.lavenderfield-700}",
+    "$description": "Muted inverse action border color for low-emphasis outlines on inverse canvases."
+  },
+  "border-inverse-emphasis": {
+    "$value": "{color.lavenderfield-400}",
+    "$description": "Emphasis inverse action border color for high-prominence outlines on inverse canvases."
+  },
+  "$type": "color"
+}

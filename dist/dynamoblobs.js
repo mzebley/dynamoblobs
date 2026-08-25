@@ -49,13 +49,13 @@
   const STYLE_ID = "dynamoblobs-styles";
 
   const BLOB_CSS = `
-.dynamo-blob-host {
+dynamo-blob {
   display: block;
   overflow: visible;
   pointer-events: none;
 }
-.dynamo-blob-host.dynamo-blob--clickable { pointer-events: auto; cursor: pointer; }
-.dynamo-blob-host.dynamo-blob--drift {
+dynamo-blob.dynamo-blob--clickable { pointer-events: auto; cursor: pointer; }
+dynamo-blob.dynamo-blob--drift {
   position: absolute;
   top: 0;
   left: 0;
@@ -86,12 +86,12 @@
   animation: dynamo-blob-scale calc(var(--dynamo-blob-time, 30000ms) * 0.5) ease-in-out infinite;
 }
 .dynamo-blob__path { fill: inherit; }
-.dynamo-blob-host[data-blob-is-wobbling="false"] .dynamo-blob__turn,
-.dynamo-blob-host[data-blob-is-wobbling="false"] .dynamo-blob__skew,
-.dynamo-blob-host[data-blob-is-wobbling="false"] .dynamo-blob__scale,
-.dynamo-blob-host[data-blob-is-animating="false"] .dynamo-blob__turn,
-.dynamo-blob-host[data-blob-is-animating="false"] .dynamo-blob__skew,
-.dynamo-blob-host[data-blob-is-animating="false"] .dynamo-blob__scale { animation-play-state: paused; }
+dynamo-blob[data-blob-is-wobbling="false"] .dynamo-blob__turn,
+dynamo-blob[data-blob-is-wobbling="false"] .dynamo-blob__skew,
+dynamo-blob[data-blob-is-wobbling="false"] .dynamo-blob__scale,
+dynamo-blob[data-blob-is-animating="false"] .dynamo-blob__turn,
+dynamo-blob[data-blob-is-animating="false"] .dynamo-blob__skew,
+dynamo-blob[data-blob-is-animating="false"] .dynamo-blob__scale { animation-play-state: paused; }
 @keyframes dynamo-blob-turn { to { transform: rotate(360deg); } }
 @keyframes dynamo-blob-skew {
   0%   { transform: skewY(0deg); }
@@ -138,7 +138,9 @@
     );
   }
 
-  class DynamoBlob extends HTMLElement {
+  const HTMLElementBase = typeof HTMLElement === "undefined" ? class {} : HTMLElement;
+
+  class DynamoBlob extends HTMLElementBase {
     static get observedAttributes() {
       return [
         "data-blob-points",
@@ -226,6 +228,19 @@
       this.generateNewBlob = this.generateNewBlob.bind(this);
       this.deflect = this.deflect.bind(this);
       this._onClick = () => this.deflect();
+      this._onClickKeydown = (event) => {
+        if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        // Enter activates on keydown like a native button. Space waits for keyup,
+        // which preserves native button timing and lets focus movement cancel it.
+        if (event.key === "Enter") this.click();
+      };
+      this._onClickKeyup = (event) => {
+        if (event.key !== " ") return;
+        event.preventDefault();
+        this.click();
+      };
+      this._managedClickAttributes = new Map();
     }
 
     // --- live state, mirrored to data-blob-is-* attributes ------------------
@@ -246,7 +261,6 @@
     connectedCallback() {
       ensureBlobStyles();
       this.classList.add("dynamo-blob-host");
-      this.setAttribute("aria-hidden", "true");
 
       this._readConfig();
 
@@ -257,23 +271,32 @@
       this.updateSeedAttribute(this.currentPath);
       if (!this.targetPath) this.targetPath = this.generatePathString();
 
-      this.innerHTML = `
-      <div class="dynamo-blob__turn">
-        <svg
-          class="dynamo-blob__skew"
-          viewBox="0 0 ${VIEW} ${VIEW}"
-          preserveAspectRatio="xMidYMid meet"
-          aria-hidden="true"
-          role="presentation"
-        >
-          <g class="dynamo-blob__scale">
-            <path class="dynamo-blob__path"></path>
-          </g>
-        </svg>
-      </div>
-    `;
-      this.svg = this.querySelector("svg");
-      this.path = this.querySelector("path");
+      const snapshotSvg = this.querySelector(":scope > .dynamo-blob__turn > svg.dynamo-blob__skew");
+      const snapshotPath = snapshotSvg?.querySelector("path.dynamo-blob__path");
+
+      if (snapshotSvg && snapshotPath) {
+        // Preserve nodes that a framework still needs to claim for hydration.
+        this.svg = snapshotSvg;
+        this.path = snapshotPath;
+      } else {
+        this.innerHTML = `
+        <div class="dynamo-blob__turn">
+          <svg
+            class="dynamo-blob__skew"
+            viewBox="0 0 ${VIEW} ${VIEW}"
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden="true"
+            role="presentation"
+          >
+            <g class="dynamo-blob__scale">
+              <path class="dynamo-blob__path"></path>
+            </g>
+          </svg>
+        </div>
+      `;
+        this.svg = this.querySelector("svg");
+        this.path = this.querySelector("path");
+      }
       // "d" is set as an attribute, never through innerHTML: a decoded
       // data-blob-seed is outside input and must stay inert data, not markup.
       this.path.setAttribute("d", this.currentPath);
@@ -551,10 +574,45 @@
       if (this._boolAttr("data-blob-drift-click", false)) {
         this.classList.add("dynamo-blob--clickable");
         this.addEventListener("click", this._onClick);
+        this.addEventListener("keydown", this._onClickKeydown);
+        this.addEventListener("keyup", this._onClickKeyup);
+
+        // A clickable blob is a real control. Keep the generated SVG decorative,
+        // but expose the host as a keyboard-operable button. Authored role, focus,
+        // and accessible-name attributes win over these defaults.
+        this._clearManagedClickAttribute("aria-hidden");
+        if (this.getAttribute("aria-hidden") === "true") {
+          this.removeAttribute("aria-hidden");
+        }
+        this._setManagedClickAttribute("role", "button");
+        this._setManagedClickAttribute("tabindex", "0");
+        if (!this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby")) {
+          this._setManagedClickAttribute("aria-label", "Deflect blob");
+        }
       } else {
         this.classList.remove("dynamo-blob--clickable");
         this.removeEventListener("click", this._onClick);
+        this.removeEventListener("keydown", this._onClickKeydown);
+        this.removeEventListener("keyup", this._onClickKeyup);
+        this._clearManagedClickAttribute("role");
+        this._clearManagedClickAttribute("tabindex");
+        this._clearManagedClickAttribute("aria-label");
+        this._setManagedClickAttribute("aria-hidden", "true");
       }
+    }
+
+    _setManagedClickAttribute(name, value) {
+      if (this.hasAttribute(name)) return;
+      this.setAttribute(name, value);
+      this._managedClickAttributes.set(name, value);
+    }
+
+    _clearManagedClickAttribute(name) {
+      const value = this._managedClickAttributes.get(name);
+      if (value !== undefined && this.getAttribute(name) === value) {
+        this.removeAttribute(name);
+      }
+      this._managedClickAttributes.delete(name);
     }
 
     _makeRandom() {
@@ -614,6 +672,8 @@
       this.animationFrameId = null;
       this.isGeneratingBlob = false;
       this.removeEventListener("click", this._onClick);
+      this.removeEventListener("keydown", this._onClickKeydown);
+      this.removeEventListener("keyup", this._onClickKeyup);
       if (this.intersectionObserver) {
         this.intersectionObserver.disconnect();
         this.intersectionObserver = null;
@@ -742,13 +802,24 @@
       this._morphing = false;
       if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
-      // Freeze the tween as a fraction of its duration (not raw ms), so resume is
-      // seamless even if the morph speed changes meanwhile. startTime already folds
-      // in any prior elapsedTime, so read it directly — never accumulate, or
-      // repeated pause/resume double-counts and the morph leaps forward.
-      if (this.startTime != null && this._morphDuration > 0) {
-        const elapsed = performance.now() - this.startTime;
-        this._morphProgress = Math.max(0, Math.min(elapsed / this._morphDuration, 1));
+      if (this.isGeneratingBlob) {
+        // A generation requested during continuous morphing shares this frame
+        // loop. Pausing freezes the exact rendered silhouette and clears the
+        // one-off target rather than leaving generation permanently wedged.
+        this.currentPath = this.path?.getAttribute("d") || this.currentPath;
+        this.targetPath = this.currentPath;
+        this.pendingPath = null;
+        this.isGeneratingBlob = false;
+        this._morphProgress = 0;
+      } else {
+        // Freeze the tween as a fraction of its duration (not raw ms), so resume is
+        // seamless even if the morph speed changes meanwhile. startTime already folds
+        // in any prior elapsedTime, so read it directly — never accumulate, or
+        // repeated pause/resume double-counts and the morph leaps forward.
+        if (this.startTime != null && this._morphDuration > 0) {
+          const elapsed = performance.now() - this.startTime;
+          this._morphProgress = Math.max(0, Math.min(elapsed / this._morphDuration, 1));
+        }
       }
       this.elapsedTime = 0;
       this.startTime = null;
@@ -779,21 +850,37 @@
 
     // One-shot regenerate + morph (analogous to a manual shuffle).
     generateNewBlob(duration = 800) {
-      if (this.isGeneratingBlob || this.animationFrameId) return this;
-      if (duration < 1) duration = 1;
+      if (prefersReducedMotion()) duration = 1;
+      if (!Number.isFinite(duration) || duration < 1) duration = 1;
+
+      // Retarget from the exact frame on screen. If the continuous morph loop is
+      // active, the generated silhouette temporarily becomes its destination;
+      // once reached, the normal loop carries on from those new points.
+      const resumeMorph = this._morphing;
+      const displayedPath = this.path?.getAttribute("d") || this.currentPath;
+      if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+      this.currentPath = displayedPath;
+      this.targetPath = this.generatePathString();
+      this.pendingPath = null;
+      this.elapsedTime = 0;
+      this.startTime = null;
+      this._morphProgress = 0;
       this.isGeneratingBlob = true;
-      // The shuffle tweens to the pre-generated target. A completed retune or
-      // snap leaves current === target; regenerate so the shuffle is visible.
-      if (this.currentPath === this.targetPath) {
-        this.targetPath = this.generatePathString();
-      }
-      this.pendingPath = this.generatePathString();
+
       this.animateBlob(duration, () => {
         this.currentPath = this.targetPath;
-        this.targetPath = this.pendingPath;
-        this.pendingPath = null;
         this.updateSeedAttribute(this.currentPath);
         this.isGeneratingBlob = false;
+
+        if (resumeMorph && this._morphing) {
+          this.targetPath = this.nextMorphTarget(this.currentPath);
+          this.pendingPath = this.nextMorphTarget(this.targetPath);
+          this._morphLoop();
+        } else {
+          this.targetPath = this.currentPath;
+          this.pendingPath = null;
+        }
       });
       return this;
     }
@@ -1102,11 +1189,11 @@
 
   // Register (guarded for SSR + double-definition).
   if (
-    typeof window !== "undefined" &&
-    window.customElements &&
-    !window.customElements.get("dynamo-blob")
+    typeof globalThis !== "undefined" &&
+    globalThis.customElements &&
+    !globalThis.customElements.get("dynamo-blob")
   ) {
-    window.customElements.define("dynamo-blob", DynamoBlob);
+    globalThis.customElements.define("dynamo-blob", DynamoBlob);
   }
 
   // ---------------------------------------------------------------------------
