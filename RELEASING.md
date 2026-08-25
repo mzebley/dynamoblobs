@@ -24,7 +24,9 @@ Push the branch and open a pull request to `main` with the exact title:
 release: v1.0.0
 ```
 
-CI enforces the branch, title, version, changelog, documentation, package contents, generated artifacts, tests, production build, and rendered accessibility gate. A successful release PR also uploads both stable tarballs as a 30-day candidate artifact. Install that artifact in a consumer when the release changes package loading or declarations.
+CI enforces the branch, title, version, changelog, documentation, package contents, generated artifacts, tests, production build, and source accessibility checks. A successful release PR also uploads both stable tarballs as a 30-day candidate artifact. Install that artifact in a consumer when the release changes package loading or declarations.
+
+`npm run verify:rendered` is an explicit maintainer check for changes to rendered docs, motion, focus, reflow, or themes. It is intentionally not part of the blocking package gate; run `npm run verify:release` when both the release gate and the full rendered matrix are warranted.
 
 ## Cut an optional prerelease
 
@@ -79,7 +81,7 @@ Keep `main` protected by pull requests and require the **Branch policy** and **V
 Every pull request runs these durable checks:
 
 - `check-docs.mjs` compares the declared attributes, public methods, exports, completion event, install command, homepage, and npm links with the README and documentation.
-- The Svelte/Zebkit documentation build and rendered verification exercise the actual site rather than treating Markdown presence as proof.
+- The Svelte/Zebkit documentation build and source checks exercise the authored site contract; use `verify:rendered` for changes whose proof requires a browser.
 - `check-generated.mjs` rejects a build that changes committed package bundles or generated Zebkit artifacts.
 - `check-package.mjs` requires the license, README, complete ESM/CommonJS/UMD/type surface, registry-neutral metadata, and matching dual-registry contents while excluding source, tests, scripts, and credentials.
 

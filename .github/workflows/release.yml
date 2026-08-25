@@ -94,9 +94,6 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm ci --ignore-scripts
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
       - name: Validate release state
         if: github.event_name == 'push'
         env:
@@ -112,7 +109,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.context.outputs.version }}
         run: node scripts/release/check-candidate.mjs "$RELEASE_VERSION"
 
-      - name: Run the complete gate
+      - name: Run the release gate
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run gate

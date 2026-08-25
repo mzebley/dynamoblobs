@@ -61,10 +61,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm ci --ignore-scripts
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Run the complete gate
+      - name: Run the release gate
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run gate

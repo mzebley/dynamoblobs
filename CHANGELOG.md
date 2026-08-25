@@ -16,6 +16,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Package declarations now distinguish ESM and CommonJS consumers, while UMD files remain available for classic direct-script loading.
 - npm keeps the canonical unscoped `dynamoblobs` name; GitHub Packages receives the required `@mzebley/dynamoblobs` scoped mirror from the same release commit.
 - Automated npm publishing is token-free: the first candidate is bootstrapped interactively, then subsequent releases require trusted publishing through OIDC.
+- The blocking release gate now keeps browser-heavy Zebkit rendered verification explicit instead of repeating the full matrix for every PR and publish job.
 
 ### Fixed
 - Corrected the documented attribute count, runtime defaults, readable-seed behavior, and morph-tween meaning.
