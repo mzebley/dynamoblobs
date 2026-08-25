@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import {
   collectBranchPolicyErrors,
   collectReleaseStateErrors,
+  isPrePublicMilestoneChange,
   latestVersionFromTags,
   parseReleaseBranch,
   parseReleaseTitle,
@@ -33,20 +34,32 @@ try {
 }
 
 const versionChanged = packageJson.version !== basePackage.version;
-const errors = collectBranchPolicyErrors({ baseBranch, headBranch, title, versionChanged });
+const tags = execFileSync('git', ['tag', '--list', 'v*'], { encoding: 'utf8' })
+  .trim()
+  .split('\n')
+  .filter(Boolean);
+const latestVersion = latestVersionFromTags(tags);
+const prePublicMilestone =
+  versionChanged &&
+  isPrePublicMilestoneChange({
+    latestVersion,
+    previousVersion: basePackage.version,
+    nextVersion: packageJson.version,
+  });
+const errors = collectBranchPolicyErrors({
+  baseBranch,
+  headBranch,
+  title,
+  versionChanged: versionChanged && !prePublicMilestone,
+});
 const branchVersion = parseReleaseBranch(headBranch);
 
 if (branchVersion) {
   const packageLock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
   const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
-  const tags = execFileSync('git', ['tag', '--list', 'v*'], { encoding: 'utf8' })
-    .trim()
-    .split('\n')
-    .filter(Boolean);
-
   errors.push(
     ...collectReleaseStateErrors({
-      latestVersion: latestVersionFromTags(tags),
+      latestVersion,
       packageVersion: packageJson.version,
       lockVersion: packageLock.version,
       lockRootVersion: packageLock.packages?.['']?.version,
@@ -65,5 +78,7 @@ if (errors.length > 0) {
 console.log(
   branchVersion
     ? `Branch policy: release/v${branchVersion} is a valid release candidate for main.`
-    : `Branch policy: ${headBranch} is a valid feature, fix, or documentation PR for main.`,
+    : prePublicMilestone
+      ? `Branch policy: ${headBranch} advances the unpublished ${basePackage.version} baseline to ${packageJson.version}.`
+      : `Branch policy: ${headBranch} is a valid feature, fix, or documentation PR for main.`,
 );

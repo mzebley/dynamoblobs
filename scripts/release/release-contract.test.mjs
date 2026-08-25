@@ -4,6 +4,7 @@ import {
   bumpVersion,
   collectBranchPolicyErrors,
   collectReleaseStateErrors,
+  isPrePublicMilestoneChange,
   parseCandidateVersion,
   parseReleaseBranch,
   parseReleaseTitle,
@@ -77,6 +78,33 @@ test('routes version changes through a release branch', () => {
       versionChanged: true,
     }).join('\n'),
     /version changes are allowed only/,
+  );
+});
+
+test('allows only forward 0.x milestones before the first public tag', () => {
+  assert.equal(
+    isPrePublicMilestoneChange({
+      latestVersion: undefined,
+      previousVersion: '0.9.1',
+      nextVersion: '0.10.0',
+    }),
+    true,
+  );
+  assert.equal(
+    isPrePublicMilestoneChange({
+      latestVersion: undefined,
+      previousVersion: '0.10.0',
+      nextVersion: '1.0.0',
+    }),
+    false,
+  );
+  assert.equal(
+    isPrePublicMilestoneChange({
+      latestVersion: '1.0.0',
+      previousVersion: '1.0.0',
+      nextVersion: '1.1.0',
+    }),
+    false,
   );
 });
 

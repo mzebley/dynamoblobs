@@ -1,6 +1,6 @@
 # Releasing Dynamoblobs
 
-`main` is the reviewed development branch and the production source. Ordinary feature, fix, and documentation pull requests target `main`. A release uses one temporary `release/vX.Y.Z` branch so version changes cannot accidentally publish from an ordinary PR.
+`main` is the reviewed development branch and the production source. Ordinary feature, fix, and documentation pull requests target `main`. Before the first stable tag, a forward `0.x` package version may record an unpublished development milestone. Public version changes use one temporary `release/vX.Y.Z` branch so they cannot accidentally publish from an ordinary PR.
 
 The canonical npm package is `dynamoblobs`. GitHub Packages requires a scope, so the same release commit is mirrored there as `@mzebley/dynamoblobs`. The release scripts require both tarballs to contain the same files and byte sizes except for the package name in `package.json`; each registry keeps its own integrity hash.
 

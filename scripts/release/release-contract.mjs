@@ -82,6 +82,18 @@ export function latestVersionFromTags(tags) {
   return versions.at(-1);
 }
 
+export function isPrePublicMilestoneChange({ latestVersion, previousVersion, nextVersion }) {
+  if (latestVersion) return false;
+
+  try {
+    const previous = parseStableVersion(previousVersion);
+    const next = parseStableVersion(nextVersion);
+    return previous.major === 0 && next.major === 0 && compareVersions(previousVersion, nextVersion) < 0;
+  } catch {
+    return false;
+  }
+}
+
 export function parseReleaseBranch(branch) {
   const match = RELEASE_BRANCH.exec(branch);
   return match ? `${match[1]}.${match[2]}.${match[3]}` : undefined;
