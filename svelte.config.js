@@ -7,5 +7,5 @@ export default {
 	extensions: ['.svelte', '.md'],
 	compilerOptions: { runes: true },
 	preprocess: [vitePreprocess(), mdsvex(mdsvexConfig)],
-	kit: { adapter: adapter({ fallback: '404.html', strict: true }) }
+	kit: { adapter: adapter() }
 };
