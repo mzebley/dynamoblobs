@@ -10,7 +10,7 @@
     "$description": "Outgoing spacing request contributed by a thematic break to the next direct child in a .prose flow. The resolved gap is the larger of this spacing-after and the next treatment's spacing-before; documented compound pairs may intentionally use the tighter outgoing gap."
   },
   "color": {
-    "$value": "{accent-primary.ink}",
+    "$value": "{app.border}",
     "$type": "color",
     "$description": "Color of a prose thematic break."
   },

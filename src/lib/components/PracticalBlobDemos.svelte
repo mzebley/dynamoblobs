@@ -57,10 +57,11 @@
 			bind:element={coverBlobOne}
 			class="cover-blob cover-blob-one"
 			points={8}
-			variance={18}
+			variance={8}
 			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="7200"
-			style="width:13rem;height:13rem"
+			data-blob-wobble-autoplay="false"
+			data-blob-morph-speed="11200"
+			style="width:var(--zbk-spacing-card);height:var(--zbk-spacing-card)"
 		/>
 		<SsrDynamoBlob
 			bind:element={coverBlobTwo}
@@ -68,26 +69,27 @@
 			points={12}
 			variance={14}
 			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="8800"
-			style="width:10rem;height:10rem"
+			data-blob-wobble-speed="90000"
+			data-blob-morph-speed="28800"
+			style="width:40rem;height:40rem"
 		/>
 		<SsrDynamoBlob
 			bind:element={coverBlobThree}
 			class="cover-blob cover-blob-three"
-			points={7}
+			points={8}
 			variance={20}
 			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="6500"
-			style="width:8rem;height:8rem"
+			data-blob-wobble-speed="80000"
+			data-blob-morph-speed="16500"
+			style="width:20rem;height:20rem"
 		/>
 	</div>
 
 	<div class="cover-copy">
-		<p class="demo-eyebrow">Generative campaign art</p>
-		<h4 id="cover-demo-title">Make room for the strange ideas.</h4>
-		<p>Layer a few low-speed blobs into a repeatable art direction, then let each impression feel slightly different.</p>
+		<h4 id="cover-demo-title">Make space for some squishies.</h4>
+		<p>Layer a few low-speed blobs into a repeatable art direction, then allow them to breathe.</p>
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-		<zbk-button variant="wave-action wave-pop lg" loading={remixing ? true : undefined} onclick={remixCover}>
+		<zbk-button variant="wave-action-inverse lg" loading={remixing ? true : undefined} onclick={remixCover}>
 			Remix the cover
 			<span slot="icon" data-position="end" aria-hidden="true">
 				<svg viewBox="0 0 24 24"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5" /></svg>
@@ -101,11 +103,12 @@
 	<div class="profile-avatar" aria-hidden="true">
 		<SsrDynamoBlob
 			class="profile-blob"
-			points={9}
-			variance={16}
+			points={6}
+			variance={4}
 			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="11000"
-			style="width:100%;height:100%"
+			data-blob-wobble-speed="40000"
+			data-blob-morph-speed="9000"
+			style="width:150%;height:150%"
 		/>
 		<span>NA</span>
 	</div>
@@ -126,7 +129,7 @@
 	.cover-demo,
 	.profile-demo {
 		margin-block: var(--zbk-spacing-2) var(--zbk-spacing-3);
-		border: var(--zbk-border-width-sm) solid var(--zbk-brand-border-muted);
+		border: var(--zbk-border-width-sm) solid var(--zbk-app-border);
 		border-radius: var(--zbk-border-radius-lg);
 		overflow: clip;
 		box-shadow: var(--zbk-elevation-sm);
@@ -135,7 +138,7 @@
 	.cover-demo {
 		display: grid;
 		grid-template-columns: minmax(0, 1.08fr) minmax(15rem, 0.92fr);
-		min-block-size: 25rem;
+		min-block-size: var(--zbk-spacing-20);
 		background: var(--zbk-brand-canvas-emphasis);
 		color: var(--zbk-brand-ink-inverse-emphasis);
 	}
@@ -143,21 +146,21 @@
 	.cover-art {
 		position: relative;
 		isolation: isolate;
-		min-block-size: 25rem;
+		min-block-size: var(--zbk-spacing-20);
 		overflow: clip;
 		background:
-			linear-gradient(90deg, color-mix(in srgb, var(--zbk-brand-canvas-emphasis) 88%, transparent) 1px, transparent 1px),
-			linear-gradient(color-mix(in srgb, var(--zbk-brand-canvas-emphasis) 88%, transparent) 1px, transparent 1px),
-			var(--zbk-accent-primary-canvas-inverse-emphasis);
-		background-size: var(--zbk-spacing-2) var(--zbk-spacing-2);
+			linear-gradient(90deg, color-mix(in srgb, var(--zbk-brand-canvas) 88%, transparent) 1px, transparent 1px),
+			linear-gradient(color-mix(in srgb, var(--zbk-brand-canvas) 88%, transparent) 1px, transparent 1px),
+			var(--zbk-accent-primary-canvas-muted);
+		background-size: var(--zbk-spacing-105) var(--zbk-spacing-105);
 	}
 
 	.cover-art::after {
 		position: absolute;
 		z-index: 2;
 		inset: var(--zbk-spacing-1);
-		border: var(--zbk-border-width-sm) solid color-mix(in srgb, var(--zbk-brand-canvas-inverse) 38%, transparent);
-		border-radius: max(0px, calc(var(--zbk-border-radius-lg) - var(--zbk-spacing-1)));
+		border: var(--zbk-border-width-md) solid color-mix(in srgb, var(--zbk-accent-secondary-canvas) 38%, transparent);
+		border-radius: var(--zbk-border-radius-md) 0 0 var(--zbk-border-radius-md);
 		content: '';
 		pointer-events: none;
 	}
@@ -167,7 +170,7 @@
 		position: absolute;
 		z-index: 3;
 		margin: 0;
-		color: var(--zbk-brand-ink-inverse-emphasis);
+		color: var(--zbk-brand-ink-emphasis);
 		font-family: var(--zbk-font-family-alt);
 		font-weight: var(--zbk-font-weight-bold);
 		letter-spacing: var(--zbk-letter-spacing-wide);
@@ -191,23 +194,24 @@
 		position: absolute;
 		z-index: 1;
 		display: block;
+		mix-blend-mode: multiply;
 	}
 
 	:global(dynamo-blob.cover-blob-one) {
-		inset-block-start: 12%;
-		inset-inline-start: 4%;
-		fill: var(--zbk-accent-secondary-canvas-emphasis);
+		inset-block-start: -12%;
+		inset-inline-start: -4%;
+		fill: var(--zbk-accent-secondary-canvas-muted);
 	}
 
 	:global(dynamo-blob.cover-blob-two) {
-		inset-block-start: 38%;
-		inset-inline-start: 46%;
-		fill: var(--zbk-accent-primary-canvas-muted);
+		inset-block-start: 18%;
+		inset-inline-start: -26%;
+		fill: var(--zbk-action-canvas-muted);
 	}
 
 	:global(dynamo-blob.cover-blob-three) {
 		inset-block-start: -5%;
-		inset-inline-start: 58%;
+		inset-inline-start: 38%;
 		fill: var(--zbk-brand-canvas-inverse);
 		opacity: 0.72;
 	}
@@ -218,17 +222,7 @@
 		align-items: flex-start;
 		justify-content: center;
 		gap: var(--zbk-spacing-1);
-		padding: clamp(var(--zbk-spacing-2), 5vw, var(--zbk-spacing-4));
-	}
-
-	.demo-eyebrow {
-		margin: 0;
-		color: var(--zbk-brand-ink-inverse-emphasis);
-		font-family: var(--zbk-font-family-alt);
-		font-size: var(--zbk-font-size-sm);
-		font-weight: var(--zbk-font-weight-bold);
-		letter-spacing: var(--zbk-letter-spacing-wide);
-		text-transform: uppercase;
+		padding: clamp(var(--zbk-spacing-1), 5vw, var(--zbk-spacing-3));
 	}
 
 	.cover-copy h4,
@@ -240,7 +234,7 @@
 
 	.cover-copy h4 {
 		color: inherit;
-		font-size: clamp(var(--zbk-font-size-2xl), 4vw, var(--zbk-font-size-4xl));
+		font-size: var(--zbk-font-size-2xl);
 	}
 
 	.cover-copy p:not(.demo-eyebrow),
@@ -262,15 +256,15 @@
 		display: grid;
 		grid-template-columns: minmax(10rem, 0.72fr) minmax(0, 1.28fr);
 		align-items: center;
-		gap: clamp(var(--zbk-spacing-105), 5vw, var(--zbk-spacing-3));
-		padding: clamp(var(--zbk-spacing-105), 5vw, var(--zbk-spacing-3));
+		gap: var(--zbk-spacing-105);
+		padding: var(--zbk-spacing-105);
 		background: var(--zbk-app-canvas-subtle);
 	}
 
 	.profile-avatar {
 		position: relative;
 		display: grid;
-		inline-size: min(100%, 13rem);
+		inline-size: min(100%, 40rem);
 		aspect-ratio: 1;
 		place-items: center;
 		justify-self: center;
@@ -281,6 +275,8 @@
 		inset: 0;
 		display: block;
 		fill: var(--zbk-accent-primary-canvas-emphasis);
+		left: -25%;
+		top:-25%;
 	}
 
 	.profile-avatar span {
@@ -316,11 +312,13 @@
 	}
 
 	.profile-copy li {
-		padding: var(--zbk-spacing-025) var(--zbk-spacing-05);
+		padding: var(--zbk-spacing-2px) var(--zbk-spacing-1);
 		border: var(--zbk-border-width-sm) solid var(--zbk-brand-border-muted);
 		border-radius: var(--zbk-border-radius-xl);
 		color: var(--zbk-brand-ink);
+		margin:0;
 		font-size: var(--zbk-font-size-sm);
+		font-weight: var(--zbk-font-weight-medium);
 	}
 
 	@media (max-width: 44rem) {

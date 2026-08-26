@@ -1,56 +1,56 @@
 {
   "50": {
-    "$value": "{color.rosewater-50}",
+    "$value": "{color.butterfield-50}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "100": {
-    "$value": "{color.rosewater-100}",
+    "$value": "{color.butterfield-100}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "200": {
-    "$value": "{color.rosewater-200}",
+    "$value": "{color.butterfield-200}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "300": {
-    "$value": "{color.rosewater-300}",
+    "$value": "{color.butterfield-300}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "400": {
-    "$value": "{color.rosewater-400}",
+    "$value": "{color.butterfield-400}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "500": {
-    "$value": "{color.rosewater-500}",
+    "$value": "{color.butterfield-500}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "600": {
-    "$value": "{color.rosewater-600}",
+    "$value": "{color.butterfield-600}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "700": {
-    "$value": "{color.rosewater-700}",
+    "$value": "{color.butterfield-700}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "800": {
-    "$value": "{color.rosewater-800}",
+    "$value": "{color.butterfield-800}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "900": {
-    "$value": "{color.rosewater-900}",
+    "$value": "{color.butterfield-900}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "950": {
-    "$value": "{color.rosewater-950}",
+    "$value": "{color.butterfield-950}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },

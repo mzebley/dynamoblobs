@@ -11,13 +11,13 @@
       "kind": "rules"
     },
     {
-      "digest": "sha256:fd29b1de05b737853f41acf162c4eaa5b7ca180c243e170968b3ff165e4ed377",
+      "digest": "sha256:1f91d1e266edb128d9c1f6abcca9f7b03f0dbc7c1b1b70c6df559db011023f22",
       "identifier": "zbk-dynamoblobs.min.css",
       "kind": "css",
       "theme": "dynamoblobs"
     },
     {
-      "digest": "sha256:7e8554fdfbff4613ee3685e89c8d95e502741540b181614bd3c160561ec1514c",
+      "digest": "sha256:343a77b58388eed3628f32e53edfeb0817ce859da4c9ea544d05eceb559851e7",
       "identifier": "zbk-dark.css",
       "kind": "css",
       "theme": "dark"
@@ -69,33 +69,33 @@
         "zbk-accent-primary": {
           "100": {
             "$type": "color",
-            "$value": "{color.rosewater-100}"
+            "$value": "{color.butterfield-100}"
           },
           "300": {
             "$type": "color",
-            "$value": "{color.rosewater-300}"
+            "$value": "{color.butterfield-300}"
           },
           "500": {
             "$type": "color",
-            "$value": "{color.rosewater-500}"
+            "$value": "{color.butterfield-500}"
           },
           "950": {
             "$type": "color",
-            "$value": "{color.rosewater-950}"
+            "$value": "{color.butterfield-950}"
           }
         },
         "zbk-action": {
           "border-emphasis": {
             "$type": "color",
-            "$value": "{color.lavenderfield-800}"
+            "$value": "{color.ember-800}"
           },
           "canvas-emphasis": {
             "$type": "color",
-            "$value": "{color.lavenderfield-800}"
+            "$value": "{color.ember-800}"
           },
           "canvas-subtle": {
             "$type": "color",
-            "$value": "{color.lavenderfield-50}"
+            "$value": "{color.ember-50}"
           },
           "ink": {
             "$type": "color",
@@ -107,7 +107,7 @@
           },
           "ink-inverse-emphasis": {
             "$type": "color",
-            "$value": "{color.lavenderfield-50}"
+            "$value": "{color.ember-50}"
           },
           "ink-muted": {
             "$type": "color",
@@ -171,33 +171,37 @@
           }
         },
         "zbk-brand": {
+          "50": {
+            "$type": "color",
+            "$value": "{color.sea-50}"
+          },
           "100": {
             "$type": "color",
-            "$value": "{color.mint-100}"
+            "$value": "{color.sea-100}"
           },
           "200": {
             "$type": "color",
-            "$value": "{color.mint-200}"
+            "$value": "{color.sea-200}"
           },
           "300": {
             "$type": "color",
-            "$value": "{color.mint-300}"
+            "$value": "{color.sea-300}"
           },
           "500": {
             "$type": "color",
-            "$value": "{color.mint-500}"
+            "$value": "{color.sea-500}"
           },
           "600": {
             "$type": "color",
-            "$value": "{color.mint-600}"
+            "$value": "{color.sea-600}"
           },
           "700": {
             "$type": "color",
-            "$value": "{color.mint-700}"
+            "$value": "{color.sea-700}"
           },
           "800": {
             "$type": "color",
-            "$value": "{color.mint-800}"
+            "$value": "{color.sea-800}"
           },
           "canvas": {
             "$type": "color",
@@ -218,6 +222,10 @@
           "ink-emphasis": {
             "$type": "color",
             "$value": "{brand.300}"
+          },
+          "ink-inverse-emphasis": {
+            "$type": "color",
+            "$value": "{brand.50}"
           },
           "ink-muted": {
             "$type": "color",
@@ -637,6 +645,61 @@
           }
         },
         "zbk-color": {
+          "butterfield-100": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                48,
+                72,
+                93
+              ]
+            }
+          },
+          "butterfield-300": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                48,
+                72,
+                78
+              ]
+            }
+          },
+          "butterfield-500": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                48,
+                72,
+                58
+              ]
+            }
+          },
+          "butterfield-950": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                48,
+                72,
+                10
+              ]
+            }
+          },
+          "charcoal-200": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                210,
+                12,
+                87
+              ]
+            }
+          },
           "charcoal-400": {
             "$type": "color",
             "$value": {
@@ -645,6 +708,17 @@
                 210,
                 12,
                 69
+              ]
+            }
+          },
+          "charcoal-700": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                210,
+                12,
+                36
               ]
             }
           },
@@ -659,36 +733,14 @@
               ]
             }
           },
-          "chestnut-200": {
+          "charcoal-900": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                26,
-                42,
-                87
-              ]
-            }
-          },
-          "chestnut-700": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                26,
-                42,
-                36
-              ]
-            }
-          },
-          "chestnut-800": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                26,
-                42,
-                26
+                210,
+                12,
+                18
               ]
             }
           },
@@ -725,6 +777,28 @@
               ]
             }
           },
+          "ember-50": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                16,
+                78,
+                98
+              ]
+            }
+          },
+          "ember-800": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                16,
+                78,
+                26
+              ]
+            }
+          },
           "global-black": {
             "$type": "color",
             "$value": {
@@ -749,157 +823,91 @@
               ]
             }
           },
-          "gold-900": {
+          "sea-100": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                40,
-                85,
-                18
-              ]
-            }
-          },
-          "lavenderfield-50": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                258,
-                42,
-                98
-              ]
-            }
-          },
-          "lavenderfield-800": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                258,
-                42,
-                26
-              ]
-            }
-          },
-          "mint-100": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                158,
-                42,
+                196,
+                36,
                 93
               ]
             }
           },
-          "mint-200": {
+          "sea-200": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                158,
-                42,
+                196,
+                36,
                 87
               ]
             }
           },
-          "mint-300": {
+          "sea-300": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                158,
-                42,
+                196,
+                36,
                 78
               ]
             }
           },
-          "mint-500": {
+          "sea-50": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                158,
-                42,
+                196,
+                36,
+                98
+              ]
+            }
+          },
+          "sea-500": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "hsl",
+              "components": [
+                196,
+                36,
                 58
               ]
             }
           },
-          "mint-600": {
+          "sea-600": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                158,
-                42,
+                196,
+                36,
                 48
               ]
             }
           },
-          "mint-700": {
+          "sea-700": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                158,
-                42,
+                196,
+                36,
                 36
               ]
             }
           },
-          "mint-800": {
+          "sea-800": {
             "$type": "color",
             "$value": {
               "colorSpace": "hsl",
               "components": [
-                158,
-                42,
+                196,
+                36,
                 26
-              ]
-            }
-          },
-          "rosewater-100": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                352,
-                40,
-                93
-              ]
-            }
-          },
-          "rosewater-300": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                352,
-                40,
-                78
-              ]
-            }
-          },
-          "rosewater-500": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                352,
-                40,
-                58
-              ]
-            }
-          },
-          "rosewater-950": {
-            "$type": "color",
-            "$value": {
-              "colorSpace": "hsl",
-              "components": [
-                352,
-                40,
-                10
               ]
             }
           },
@@ -982,7 +990,7 @@
         "zbk-info": {
           "ink": {
             "$type": "color",
-            "$value": "{color.gold-900}"
+            "$value": "{neutral.900}"
           }
         },
         "zbk-letter-spacing": {
@@ -1089,15 +1097,19 @@
         "zbk-neutral": {
           "200": {
             "$type": "color",
-            "$value": "{color.chestnut-200}"
+            "$value": "{color.charcoal-200}"
           },
           "700": {
             "$type": "color",
-            "$value": "{color.chestnut-700}"
+            "$value": "{color.charcoal-700}"
           },
           "800": {
             "$type": "color",
-            "$value": "{color.chestnut-800}"
+            "$value": "{color.charcoal-800}"
+          },
+          "900": {
+            "$type": "color",
+            "$value": "{color.charcoal-900}"
           }
         },
         "zbk-p": {
@@ -1604,8 +1616,40 @@
         {
           "axis": "style",
           "component": "button",
-          "name": "wave-action-strong",
+          "name": "wave-action-inverse",
           "order": 8,
+          "overrides": {
+            "border-color": "{brand.canvas}",
+            "border-color-active": "{brand.canvas}",
+            "border-color-hover": "{brand.canvas}",
+            "border-radius": "{border.radius-md}",
+            "border-width": "{border.width-sm}",
+            "box-shadow": "var(--zbk-spacing-05) var(--zbk-spacing-05) 0 var(--zbk-spacing-2px) color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+            "box-shadow-active": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+            "box-shadow-disabled": "none",
+            "box-shadow-focus": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+            "box-shadow-hover": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-950) 50%, transparent)",
+            "canvas": "transparent",
+            "canvas-active": "color-mix(in srgb, var(--zbk-brand-950) 70%, transparent)",
+            "canvas-hover": "color-mix(in srgb, var(--zbk-brand-950) 32.5%, transparent)",
+            "ink": "{brand.ink-inverse-emphasis}",
+            "ink-active": "{brand.ink-inverse-emphasis}",
+            "ink-hover": "{brand.ink-inverse-emphasis}",
+            "transform": "none",
+            "transform-active": "scale(.985)",
+            "transform-disabled": "none",
+            "transform-focus": "none",
+            "transform-hover": "none",
+            "transition-delay": "0ms",
+            "transition-duration": "{transition.duration-default}",
+            "transition-timing-function": "{transition.playful-fx-function-default}"
+          }
+        },
+        {
+          "axis": "style",
+          "component": "button",
+          "name": "wave-action-strong",
+          "order": 9,
           "overrides": {
             "border-color": "{brand.canvas-subtle}",
             "border-color-active": "{brand.canvas-subtle}",
@@ -1791,41 +1835,41 @@
     "zbk-accent-primary": {
       "50": {
         "$type": "color",
-        "$value": "{color.rosewater-50}"
+        "$value": "{color.butterfield-50}"
       },
       "500": {
         "$type": "color",
-        "$value": "{color.rosewater-500}"
+        "$value": "{color.butterfield-500}"
       }
     },
     "zbk-action": {
       "border-emphasis": {
         "$type": "color",
-        "$value": "{color.lavenderfield-800}"
+        "$value": "{color.ember-800}"
       },
       "canvas-emphasis": {
         "$type": "color",
-        "$value": "{color.lavenderfield-800}"
+        "$value": "{color.ember-800}"
       },
       "canvas-subtle": {
         "$type": "color",
-        "$value": "{color.lavenderfield-50}"
+        "$value": "{color.ember-50}"
       },
       "ink": {
         "$type": "color",
-        "$value": "{color.lavenderfield-700}"
+        "$value": "{color.ember-700}"
       },
       "ink-emphasis": {
         "$type": "color",
-        "$value": "{color.lavenderfield-900}"
+        "$value": "{color.ember-900}"
       },
       "ink-inverse-emphasis": {
         "$type": "color",
-        "$value": "{color.lavenderfield-50}"
+        "$value": "{color.ember-50}"
       },
       "ink-muted": {
         "$type": "color",
-        "$value": "{color.lavenderfield-500}"
+        "$value": "{color.ember-500}"
       }
     },
     "zbk-app": {
@@ -1885,37 +1929,41 @@
       }
     },
     "zbk-brand": {
+      "50": {
+        "$type": "color",
+        "$value": "{color.sea-50}"
+      },
       "100": {
         "$type": "color",
-        "$value": "{color.mint-100}"
+        "$value": "{color.sea-100}"
       },
       "200": {
         "$type": "color",
-        "$value": "{color.mint-200}"
+        "$value": "{color.sea-200}"
       },
       "300": {
         "$type": "color",
-        "$value": "{color.mint-300}"
+        "$value": "{color.sea-300}"
       },
       "500": {
         "$type": "color",
-        "$value": "{color.mint-500}"
+        "$value": "{color.sea-500}"
       },
       "600": {
         "$type": "color",
-        "$value": "{color.mint-600}"
+        "$value": "{color.sea-600}"
       },
       "700": {
         "$type": "color",
-        "$value": "{color.mint-700}"
+        "$value": "{color.sea-700}"
       },
       "800": {
         "$type": "color",
-        "$value": "{color.mint-800}"
+        "$value": "{color.sea-800}"
       },
       "950": {
         "$type": "color",
-        "$value": "{color.mint-950}"
+        "$value": "{color.sea-950}"
       },
       "canvas": {
         "$type": "color",
@@ -1936,6 +1984,10 @@
       "ink-emphasis": {
         "$type": "color",
         "$value": "{brand.800}"
+      },
+      "ink-inverse-emphasis": {
+        "$type": "color",
+        "$value": "{brand.50}"
       },
       "ink-muted": {
         "$type": "color",
@@ -2263,7 +2315,7 @@
       },
       "canvas": {
         "$type": "color",
-        "$value": "{neutral.100}"
+        "$value": "{neutral.50}"
       },
       "code-canvas": {
         "$type": "color",
@@ -2359,6 +2411,50 @@
       }
     },
     "zbk-color": {
+      "butterfield-50": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            48,
+            72,
+            98
+          ]
+        }
+      },
+      "butterfield-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            48,
+            72,
+            58
+          ]
+        }
+      },
+      "charcoal-200": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            210,
+            12,
+            87
+          ]
+        }
+      },
+      "charcoal-300": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            210,
+            12,
+            78
+          ]
+        }
+      },
       "charcoal-400": {
         "$type": "color",
         "$value": {
@@ -2367,6 +2463,28 @@
             210,
             12,
             69
+          ]
+        }
+      },
+      "charcoal-50": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            210,
+            12,
+            98
+          ]
+        }
+      },
+      "charcoal-700": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            210,
+            12,
+            36
           ]
         }
       },
@@ -2381,47 +2499,14 @@
           ]
         }
       },
-      "chestnut-100": {
+      "charcoal-900": {
         "$type": "color",
         "$value": {
           "colorSpace": "hsl",
           "components": [
-            26,
-            42,
-            93
-          ]
-        }
-      },
-      "chestnut-200": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            26,
-            42,
-            87
-          ]
-        }
-      },
-      "chestnut-300": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            26,
-            42,
-            78
-          ]
-        }
-      },
-      "chestnut-700": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            26,
-            42,
-            36
+            210,
+            12,
+            18
           ]
         }
       },
@@ -2433,6 +2518,61 @@
             220,
             22,
             10
+          ]
+        }
+      },
+      "ember-50": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            16,
+            78,
+            98
+          ]
+        }
+      },
+      "ember-500": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            16,
+            78,
+            58
+          ]
+        }
+      },
+      "ember-700": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            16,
+            78,
+            36
+          ]
+        }
+      },
+      "ember-800": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            16,
+            78,
+            26
+          ]
+        }
+      },
+      "ember-900": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            16,
+            78,
+            18
           ]
         }
       },
@@ -2460,179 +2600,102 @@
           "hex": "#fefefe"
         }
       },
-      "gold-900": {
+      "sea-100": {
         "$type": "color",
         "$value": {
           "colorSpace": "hsl",
           "components": [
-            40,
-            85,
-            18
-          ]
-        }
-      },
-      "lavenderfield-50": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            258,
-            42,
-            98
-          ]
-        }
-      },
-      "lavenderfield-500": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            258,
-            42,
-            58
-          ]
-        }
-      },
-      "lavenderfield-700": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            258,
-            42,
-            36
-          ]
-        }
-      },
-      "lavenderfield-800": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            258,
-            42,
-            26
-          ]
-        }
-      },
-      "lavenderfield-900": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            258,
-            42,
-            18
-          ]
-        }
-      },
-      "mint-100": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            158,
-            42,
+            196,
+            36,
             93
           ]
         }
       },
-      "mint-200": {
+      "sea-200": {
         "$type": "color",
         "$value": {
           "colorSpace": "hsl",
           "components": [
-            158,
-            42,
+            196,
+            36,
             87
           ]
         }
       },
-      "mint-300": {
+      "sea-300": {
         "$type": "color",
         "$value": {
           "colorSpace": "hsl",
           "components": [
-            158,
-            42,
+            196,
+            36,
             78
           ]
         }
       },
-      "mint-500": {
+      "sea-50": {
         "$type": "color",
         "$value": {
           "colorSpace": "hsl",
           "components": [
-            158,
-            42,
-            58
-          ]
-        }
-      },
-      "mint-600": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            158,
-            42,
-            48
-          ]
-        }
-      },
-      "mint-700": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            158,
-            42,
-            36
-          ]
-        }
-      },
-      "mint-800": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            158,
-            42,
-            26
-          ]
-        }
-      },
-      "mint-950": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            158,
-            42,
-            10
-          ]
-        }
-      },
-      "rosewater-50": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "hsl",
-          "components": [
-            352,
-            40,
+            196,
+            36,
             98
           ]
         }
       },
-      "rosewater-500": {
+      "sea-500": {
         "$type": "color",
         "$value": {
           "colorSpace": "hsl",
           "components": [
-            352,
-            40,
+            196,
+            36,
             58
+          ]
+        }
+      },
+      "sea-600": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            196,
+            36,
+            48
+          ]
+        }
+      },
+      "sea-700": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            196,
+            36,
+            36
+          ]
+        }
+      },
+      "sea-800": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            196,
+            36,
+            26
+          ]
+        }
+      },
+      "sea-950": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "hsl",
+          "components": [
+            196,
+            36,
+            10
           ]
         }
       },
@@ -2715,7 +2778,7 @@
     "zbk-info": {
       "ink": {
         "$type": "color",
-        "$value": "{color.gold-900}"
+        "$value": "{neutral.900}"
       }
     },
     "zbk-letter-spacing": {
@@ -2820,21 +2883,25 @@
       }
     },
     "zbk-neutral": {
-      "100": {
+      "50": {
         "$type": "color",
-        "$value": "{color.chestnut-100}"
+        "$value": "{color.charcoal-50}"
       },
       "200": {
         "$type": "color",
-        "$value": "{color.chestnut-200}"
+        "$value": "{color.charcoal-200}"
       },
       "300": {
         "$type": "color",
-        "$value": "{color.chestnut-300}"
+        "$value": "{color.charcoal-300}"
       },
       "700": {
         "$type": "color",
-        "$value": "{color.chestnut-700}"
+        "$value": "{color.charcoal-700}"
+      },
+      "900": {
+        "$type": "color",
+        "$value": "{color.charcoal-900}"
       }
     },
     "zbk-p": {
@@ -27569,8 +27636,40 @@
     {
       "axis": "style",
       "component": "button",
-      "name": "wave-action-strong",
+      "name": "wave-action-inverse",
       "order": 8,
+      "overrides": {
+        "border-color": "{brand.canvas}",
+        "border-color-active": "{brand.canvas}",
+        "border-color-hover": "{brand.canvas}",
+        "border-radius": "{border.radius-md}",
+        "border-width": "{border.width-sm}",
+        "box-shadow": "var(--zbk-spacing-05) var(--zbk-spacing-05) 0 var(--zbk-spacing-2px) color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+        "box-shadow-active": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+        "box-shadow-disabled": "none",
+        "box-shadow-focus": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+        "box-shadow-hover": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-950) 50%, transparent)",
+        "canvas": "transparent",
+        "canvas-active": "color-mix(in srgb, var(--zbk-brand-950) 70%, transparent)",
+        "canvas-hover": "color-mix(in srgb, var(--zbk-brand-950) 32.5%, transparent)",
+        "ink": "{brand.ink-inverse-emphasis}",
+        "ink-active": "{brand.ink-inverse-emphasis}",
+        "ink-hover": "{brand.ink-inverse-emphasis}",
+        "transform": "none",
+        "transform-active": "scale(.985)",
+        "transform-disabled": "none",
+        "transform-focus": "none",
+        "transform-hover": "none",
+        "transition-delay": "0ms",
+        "transition-duration": "{transition.duration-default}",
+        "transition-timing-function": "{transition.playful-fx-function-default}"
+      }
+    },
+    {
+      "axis": "style",
+      "component": "button",
+      "name": "wave-action-strong",
+      "order": 9,
       "overrides": {
         "border-color": "{brand.canvas-subtle}",
         "border-color-active": "{brand.canvas-subtle}",

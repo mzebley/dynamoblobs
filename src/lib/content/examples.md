@@ -7,34 +7,34 @@
 
 <h2 id="examples">Practical examples</h2>
 
-The blob should do more than sit beside a heading. These examples give it a clear role in the composition while keeping the text, controls, and state understandable without the decoration.
+Blobs can do all kinds of things more than just sitting around looking squishy. Especially when you throw <code>clipPath</code> into the mix. First though, blobs that make a living just sitting around.
 
-<h3 id="ambient-background">Generative campaign art</h3>
+<h3 id="ambient-background">Keep an attention grabber fresh</h3>
 
-Build a small visual system from a few deliberately placed blobs. Different point counts, variance, and slow morph speeds keep the cover related from one impression to the next without making the content move.
+Build a small visual system where blobs can live without obscuring relevant content. Different point counts, variance, and slow morph/wobble speeds keep the effect looking curated without every becoming stale.
 
 ```html
 <section class="campaign-cover">
   <div class="campaign-art" aria-hidden="true">
-    <dynamo-blob data-blob-points="8" data-blob-variance="18"
-      data-blob-morph-autoplay="true" data-blob-morph-speed="7200"></dynamo-blob>
+    <dynamo-blob data-blob-points="8" data-blob-variance="8"
+      data-blob-morph-autoplay="true" data-blob-morph-speed="11000" data-blob-wobble-autoplay="false"></dynamo-blob>
     <dynamo-blob data-blob-points="12" data-blob-variance="14"
-      data-blob-morph-autoplay="true" data-blob-morph-speed="8800"></dynamo-blob>
-    <dynamo-blob data-blob-points="7" data-blob-variance="20"
-      data-blob-morph-autoplay="true" data-blob-morph-speed="6500"></dynamo-blob>
+      data-blob-morph-autoplay="true" data-blob-morph-speed="28000" data-blob-wobble-speed="90000"></dynamo-blob>
+    <dynamo-blob data-blob-points="8" data-blob-variance="20"
+      data-blob-morph-autoplay="true" data-blob-wobble-speed="80000" data-blob-morph-speed="16500"></dynamo-blob>
   </div>
   <div class="campaign-copy">
     <p>Field notes · 04</p>
-    <h2>Make room for the strange ideas.</h2>
+    <h2>Make space for some squishies.</h2>
   </div>
 </section>
 ```
 
 <PracticalBlobDemos demo="cover" />
 
-<h3 id="morphing-image-crop">A crop that refuses the rectangle</h3>
+<h3 id="morphing-image-crop">Blob-shaped images!</h3>
 
-Use the public path helpers to drive an SVG `clipPath`, then place an ordinary image behind it. The image remains accessible and reusable; only the crop geometry morphs. Hold the first deterministic path when the visitor prefers reduced motion.
+Use the public path helpers to drive an SVG `clipPath`, then place any image behind it. The image remains accessible and reusable; only the crop geometry morphs. Hold the first deterministic path when the visitor prefers reduced motion.
 
 ```js
 import {
@@ -74,9 +74,9 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
 
 <MorphingImageCropDemo />
 
-<h3 id="organic-avatar">A profile mark with a pulse</h3>
+<h3 id="organic-avatar">Organic-shaped avatars</h3>
 
-A single slow blob can make an avatar or monogram feel authored without becoming the identity itself. The initials remain ordinary text above a decorative blob, so the name still does the semantic work.
+A single, slowly morphing blob can pretty easily become the background for all sorts of things. Things like this avatar, where the initials remain ordinary text above a decorative blob which insures proper accesibility for screen readers.
 
 ```html
 <article class="maker-profile">
@@ -95,29 +95,9 @@ A single slow blob can make an avatar or monogram feel authored without becoming
 
 <PracticalBlobDemos demo="profile" />
 
-<h3 id="notification-background">A status mark with softer edges</h3>
+<h3 id="transition-example">Interactive animation made easy</h3>
 
-Use a slow blob behind a familiar status icon to give a notification a little personality. Keep the icon and copy intact, because silhouette and color are supporting cues rather than the only way the result is communicated.
-
-```html
-<aside class="notification" role="status">
-  <div class="notification-mark" aria-hidden="true">
-    <dynamo-blob data-blob-points="8" data-blob-variance="17"
-      data-blob-morph-autoplay="true" data-blob-morph-speed="9200"></dynamo-blob>
-    <svg viewBox="0 0 24 24"><path d="m6.5 12.5 3.4 3.4 7.6-8"></path></svg>
-  </div>
-  <div>
-    <strong>Your field guide is ready.</strong>
-    <span>field-guide-06.pdf · 18.4 MB</span>
-  </div>
-</aside>
-```
-
-<BlobNotificationDemo />
-
-<h3 id="transition-example">A transition that earns the motion</h3>
-
-Use a one-off morph as feedback while an interface advances. Disable the trigger during the transition, listen on the blob because the completion event does not bubble, and return focus when the next state is ready.
+Use a one-off morph to visualize feedback as an interface advances. Disable the trigger during the transition and return focus when the next state is ready.
 
 ```js
 const blob = document.querySelector('#process-blob');

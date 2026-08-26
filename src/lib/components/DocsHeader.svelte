@@ -32,13 +32,14 @@
 		--intro-surface-break: clamp(28rem, 54svh, 36rem);
 		position: relative;
 		isolation: isolate;
-		min-block-size: max(42rem, 100svh);
-		background: linear-gradient(
+		min-block-size: max(var(--zbk-spacing-mobile), 40svh);
+		/* background: linear-gradient(
 			to bottom,
 			var(--zbk-brand-canvas-inverse-emphasis) 0 var(--intro-surface-break),
 			var(--zbk-app-canvas) var(--intro-surface-break) 100%
-		);
-		overflow: clip;
+		); */
+		overflow-x: clip;
+		overflow-y: visible;
 	}
 
 	.site-header {
@@ -56,7 +57,7 @@
 	@media (max-width: 44rem) {
 		.intro-viewport {
 			--intro-surface-break: clamp(30rem, 58svh, 34rem);
-			min-block-size: max(44rem, 100svh);
+			min-block-size: max(var(--zbk-spacing-card), 50svh);
 		}
 	}
 </style>

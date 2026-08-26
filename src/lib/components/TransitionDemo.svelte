@@ -97,7 +97,7 @@
 			</ol>
 			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 			<zbk-button bind:this={button} data-transition-next variant="wave-action wave-pop lg" loading={busy ? true : undefined} onclick={next}>
-				{activeIndex === steps.length - 1 ? 'Start again' : 'Next step'}
+				<span style="min-width:max-content;display:flex">{activeIndex === steps.length - 1 ? 'Start again' : 'Next step'}</span>
 				<span slot="icon" data-position="end" aria-hidden="true">
 					<svg viewBox="0 0 24 24"><path d={activeIndex === steps.length - 1 ? 'M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6' : 'M9 18l6-6-6-6'} /></svg>
 				</span>
@@ -114,7 +114,7 @@
 		min-block-size: 25rem;
 		margin-block: var(--zbk-spacing-2) var(--zbk-spacing-3);
 		overflow: clip;
-		border: var(--zbk-border-width-sm) solid var(--zbk-brand-border-muted);
+		border: var(--zbk-border-width-sm) solid var(--zbk-app-border);
 		border-radius: var(--zbk-border-radius-lg);
 		background: var(--zbk-app-canvas-subtle);
 		box-shadow: var(--zbk-elevation-sm);
@@ -236,6 +236,7 @@
 		border-radius: var(--zbk-border-radius-xl);
 		background: var(--zbk-brand-canvas-muted);
 		transition: inline-size var(--zbk-transition-duration-default) ease, background-color var(--zbk-transition-duration-default) ease;
+		margin:0;
 	}
 
 	.transition-footer li.active {

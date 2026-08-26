@@ -3,128 +3,117 @@
 	import SsrDynamoBlob from './SsrDynamoBlob.svelte';
 
 	let field = $state<HTMLElement>();
+	let isReady = $state(false);
 
 	onMount(() => {
+		let cancelled = false;
 		const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
 		const syncMotion = () => {
 			field?.querySelectorAll('dynamo-blob').forEach((blob) => {
 				blob.setAttribute('data-blob-is-animating', String(!motionPreference.matches));
 			});
 		};
+		const revealWhenReady = async () => {
+			await customElements.whenDefined('dynamo-blob');
+			await new Promise<void>((resolve) => {
+				requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+			});
+			if (!cancelled) isReady = true;
+		};
 
 		syncMotion();
+		void revealWhenReady();
 		motionPreference.addEventListener('change', syncMotion);
-		return () => motionPreference.removeEventListener('change', syncMotion);
+		return () => {
+			cancelled = true;
+			motionPreference.removeEventListener('change', syncMotion);
+		};
 	});
 </script>
 
-<div bind:this={field} class="ambient-field" aria-hidden="true">
-	<div class="ambient-lane ambient-lane-one">
-		<SsrDynamoBlob
-			class="ambient-blob ambient-blob-one ambient-primary"
-			points={9}
-			variance={15}
-			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="17000"
-			data-blob-morph-intensity="0.42"
-			data-blob-drift-autoplay="true"
-			data-blob-drift-speed="0.34"
-			data-blob-drift-intensity="0.9"
-		/>
-	</div>
-	<div class="ambient-lane ambient-lane-two">
-		<SsrDynamoBlob
-			class="ambient-blob ambient-blob-two ambient-secondary"
-			points={12}
-			variance={13}
-			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="21000"
-			data-blob-morph-intensity="0.38"
-			data-blob-drift-autoplay="true"
-			data-blob-drift-speed="0.28"
-			data-blob-drift-intensity="1.08"
-		/>
-	</div>
-	<div class="ambient-lane ambient-lane-three">
-		<SsrDynamoBlob
-			class="ambient-blob ambient-blob-three ambient-primary"
-			points={7}
-			variance={17}
-			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="19000"
-			data-blob-morph-intensity="0.36"
-			data-blob-drift-autoplay="true"
-			data-blob-drift-speed="0.3"
-			data-blob-drift-intensity="0.86"
-		/>
-	</div>
-	<div class="ambient-lane ambient-lane-four">
-		<SsrDynamoBlob
-			class="ambient-blob ambient-blob-four ambient-secondary"
-			points={10}
-			variance={14}
-			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="23000"
-			data-blob-morph-intensity="0.44"
-			data-blob-drift-autoplay="true"
-			data-blob-drift-speed="0.26"
-			data-blob-drift-intensity="1.12"
-		/>
-	</div>
-	<div class="ambient-lane ambient-lane-five">
-		<SsrDynamoBlob
-			class="ambient-blob ambient-blob-five ambient-primary"
-			points={14}
-			variance={12}
-			data-blob-morph-autoplay="true"
-			data-blob-morph-speed="25000"
-			data-blob-morph-intensity="0.4"
-			data-blob-drift-autoplay="true"
-			data-blob-drift-speed="0.23"
-			data-blob-drift-intensity="0.94"
-		/>
-	</div>
+<div bind:this={field} class:ambient-field-ready={isReady} class="ambient-field" aria-hidden="true">
+	<SsrDynamoBlob
+		class="ambient-blob ambient-blob-one ambient-primary"
+		points={9}
+		variance={4}
+		data-blob-morph-autoplay="true"
+		data-blob-morph-speed="17000"
+		data-blob-morph-intensity="0.42"
+		data-blob-drift-autoplay="true"
+		data-blob-drift-speed="0.34"
+		data-blob-drift-intensity="0.9"
+		data-blob-drift-start-position="current"
+	/>
+	<SsrDynamoBlob
+		class="ambient-blob ambient-blob-two ambient-secondary"
+		points={12}
+		variance={13}
+		data-blob-morph-autoplay="true"
+		data-blob-morph-speed="21000"
+		data-blob-morph-intensity="0.38"
+		data-blob-drift-autoplay="true"
+		data-blob-drift-speed="0.28"
+		data-blob-drift-intensity="1.08"
+		data-blob-drift-start-position="current"
+	/>
+	<SsrDynamoBlob
+		class="ambient-blob ambient-blob-three ambient-primary"
+		points={7}
+		variance={7}
+		data-blob-morph-autoplay="true"
+		data-blob-morph-speed="19000"
+		data-blob-morph-intensity="0.36"
+		data-blob-drift-autoplay="true"
+		data-blob-drift-speed="0.3"
+		data-blob-drift-intensity="0.86"
+		data-blob-drift-start-position="current"
+	/>
+	<SsrDynamoBlob
+		class="ambient-blob ambient-blob-four ambient-secondary"
+		points={10}
+		variance={4}
+		data-blob-morph-autoplay="true"
+		data-blob-morph-speed="23000"
+		data-blob-morph-intensity="0.44"
+		data-blob-drift-autoplay="true"
+		data-blob-drift-speed="0.26"
+		data-blob-drift-intensity="1.12"
+		data-blob-drift-start-position="current"
+	/>
+	<SsrDynamoBlob
+		class="ambient-blob ambient-blob-five ambient-primary"
+		points={14}
+		variance={12}
+		data-blob-morph-autoplay="true"
+		data-blob-morph-speed="25000"
+		data-blob-morph-intensity="0.4"
+		data-blob-drift-autoplay="true"
+		data-blob-drift-speed="0.23"
+		data-blob-drift-intensity="0.94"
+		data-blob-drift-start-position="current"
+	/>
 </div>
 
 <style>
 	.ambient-field {
 		position: absolute;
 		z-index: 0;
-		inset: 0;
-		contain: layout paint;
-		overflow: clip;
+		inset-block: -18rem;
+		inset-inline: -12rem;
+		contain: layout;
 		pointer-events: none;
+		opacity: 0;
+		transition: opacity var(--zbk-transition-duration-slow, 500ms) ease;
 	}
 
-	.ambient-lane {
-		position: absolute;
-		overflow: visible;
-	}
-
-	.ambient-lane-one {
-		inset: -8% 42% 48% -10%;
-	}
-
-	.ambient-lane-two {
-		inset: -6% -10% 43% 45%;
-	}
-
-	.ambient-lane-three {
-		inset: 38% 38% -8% -12%;
-	}
-
-	.ambient-lane-four {
-		inset: 40% -12% -10% 44%;
-	}
-
-	.ambient-lane-five {
-		inset: 18% 18% 16% 18%;
+	.ambient-field-ready {
+		opacity: 1;
 	}
 
 	:global(dynamo-blob.ambient-blob) {
 		position: absolute;
 		display: block;
-		opacity: 0.28;
+		opacity: 0.1125;
 		mix-blend-mode: multiply;
 	}
 
@@ -134,32 +123,47 @@
 
 	:global(dynamo-blob.ambient-secondary) {
 		fill: var(--zbk-accent-secondary-canvas-emphasis);
-		opacity: 0.24;
+		/* opacity: 0.24; */
 	}
 
 	:global(dynamo-blob.ambient-blob-one) {
-		inline-size: clamp(25rem, 48vw, 50rem);
-		block-size: clamp(25rem, 48vw, 50rem);
+		inset-block-start: 5%;
+		inset-inline-start: 6%;
+		inline-size: clamp(31.25rem, 60vw, 62.5rem);
+		block-size: clamp(31.25rem, 60vw, 62.5rem);
 	}
 
 	:global(dynamo-blob.ambient-blob-two) {
-		inline-size: clamp(22rem, 41vw, 44rem);
-		block-size: clamp(22rem, 41vw, 44rem);
+		inset-block-start: 14%;
+		inset-inline-start: 59%;
+		inline-size: clamp(27.5rem, 51.25vw, 55rem);
+		block-size: clamp(27.5rem, 51.25vw, 55rem);
 	}
 
 	:global(dynamo-blob.ambient-blob-three) {
-		inline-size: clamp(27rem, 52vw, 54rem);
-		block-size: clamp(27rem, 52vw, 54rem);
+		inset-block-start: 41%;
+		inset-inline-start: 8%;
+		inline-size: clamp(33.75rem, 65vw, 67.5rem);
+		block-size: clamp(33.75rem, 65vw, 67.5rem);
 	}
 
 	:global(dynamo-blob.ambient-blob-four) {
-		inline-size: clamp(21rem, 38vw, 40rem);
-		block-size: clamp(21rem, 38vw, 40rem);
+		inset-block-start: 50%;
+		inset-inline-start: 58%;
+		inline-size: clamp(26.25rem, 47.5vw, 50rem);
+		block-size: clamp(26.25rem, 47.5vw, 50rem);
 	}
 
 	:global(dynamo-blob.ambient-blob-five) {
-		inline-size: clamp(18rem, 32vw, 34rem);
-		block-size: clamp(18rem, 32vw, 34rem);
+		inset-block-start: 35%;
+		inset-inline-start: 33%;
+		inline-size: clamp(22.5rem, 40vw, 42.5rem);
+		block-size: clamp(22.5rem, 40vw, 42.5rem);
+	}
+
+	:global(dynamo-blob.ambient-blob.dynamo-blob--drift) {
+		inset-block-start: 0;
+		inset-inline-start: 0;
 	}
 
 	:global(html[data-zbk-theme='dark']) :global(dynamo-blob.ambient-blob) {
@@ -172,24 +176,8 @@
 	}
 
 	@media (max-width: 44rem) {
-		.ambient-lane-one {
-			inset: -8% -5% 56% -42%;
-		}
-
-		.ambient-lane-two {
-			inset: 2% -48% 52% 28%;
-		}
-
-		.ambient-lane-three {
-			inset: 38% -4% -5% -48%;
-		}
-
-		.ambient-lane-four {
-			inset: 48% -48% -8% 24%;
-		}
-
-		.ambient-lane-five {
-			inset: 24% -10% 18% -10%;
+		.ambient-field {
+			inset-inline: -24rem;
 		}
 
 		:global(dynamo-blob.ambient-blob) {
@@ -201,28 +189,33 @@
 		}
 
 		:global(dynamo-blob.ambient-blob-one) {
-			inline-size: 34rem;
-			block-size: 34rem;
+			inset-inline-start: 8%;
+			inline-size: 42.5rem;
+			block-size: 42.5rem;
 		}
 
 		:global(dynamo-blob.ambient-blob-two) {
-			inline-size: 29rem;
-			block-size: 29rem;
+			inset-inline-start: 50%;
+			inline-size: 36.25rem;
+			block-size: 36.25rem;
 		}
 
 		:global(dynamo-blob.ambient-blob-three) {
-			inline-size: 36rem;
-			block-size: 36rem;
+			inset-inline-start: 11%;
+			inline-size: 45rem;
+			block-size: 45rem;
 		}
 
 		:global(dynamo-blob.ambient-blob-four) {
-			inline-size: 27rem;
-			block-size: 27rem;
+			inset-inline-start: 47%;
+			inline-size: 33.75rem;
+			block-size: 33.75rem;
 		}
 
 		:global(dynamo-blob.ambient-blob-five) {
-			inline-size: 24rem;
-			block-size: 24rem;
+			inset-inline-start: 34%;
+			inline-size: 30rem;
+			block-size: 30rem;
 		}
 	}
 </style>
