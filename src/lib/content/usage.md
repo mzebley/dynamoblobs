@@ -28,7 +28,7 @@ Classes, IDs, inline styles, and data attributes all remain on `<dynamo-blob>`. 
 ></dynamo-blob>
 ```
 
-Use the declarative `*-autoplay` attributes for ambient motion. They respect reduced-motion preferences. Explicit `play*()` calls are intentional user actions and run even when reduced motion is requested.
+Use the declarative `*-autoplay` attributes for ambient motion. They respect reduced-motion preferences, including changes while connected. An explicit master pause (`pause()` or `data-blob-is-animating="false"`) keeps later autoplay edits from restarting motion; `play()` releases that pause. The automatically reflected master value does not itself block autoplay. Explicit `play*()` calls are intentional user actions and run even when reduced motion is requested. An explicit per-layer play or pause takes over that layer until its autoplay attribute changes again.
 
 <h3 id="motion-layers">Live controls</h3>
 
@@ -49,4 +49,4 @@ blob.dataset.blobMorphAutoplay = 'true';
 blob.dataset.blobDriftClick = 'true';
 ```
 
-Geometry changes retarget the visible SVG in place; motion settings are reconfigured without replacing the host. A drifting blob needs a positioned parent with practical dimensions. `data-blob-drift-click="true"` exposes the host as a focusable, named button that deflects on pointer click, <kbd>Enter</kbd>, or <kbd>Space</kbd>. Add an `aria-label` when the default “Deflect blob” label is not specific enough.
+Geometry changes retarget the visible SVG in place; changing point count first approximates the current shape with the new number of vertices. Motion settings are reconfigured without replacing the host. Imperative timing overrides persist until the corresponding speed attribute changes. Editing `data-blob-drift-start-position` repositions initialized drift immediately; `current` keeps its displayed position. A drifting blob needs a positioned parent with practical dimensions. `data-blob-drift-click="true"` exposes the host as a focusable, named button that deflects on pointer click, <kbd>Enter</kbd>, or <kbd>Space</kbd>. Add an `aria-label` when the default “Deflect blob” label is not specific enough.

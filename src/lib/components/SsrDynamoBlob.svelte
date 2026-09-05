@@ -13,8 +13,11 @@
 	// rewrites the authored class list. Restore the live class state after mount.
 	onMount(() => {
 		let cancelled = false;
+		let restoreFrame: number | undefined;
 		void customElements.whenDefined('dynamo-blob').then(() => {
-			requestAnimationFrame(() => {
+			if (cancelled) return;
+			restoreFrame = requestAnimationFrame(() => {
+				restoreFrame = undefined;
 				if (cancelled || !element) return;
 				const clickValue = element.getAttribute('data-blob-drift-click');
 				const isClickable = clickValue !== null && !['false', '0', 'no', 'off'].includes(clickValue.trim().toLowerCase());
@@ -25,6 +28,7 @@
 		});
 		return () => {
 			cancelled = true;
+			if (restoreFrame !== undefined) cancelAnimationFrame(restoreFrame);
 		};
 	});
 </script>

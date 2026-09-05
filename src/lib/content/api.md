@@ -19,14 +19,14 @@ All observed attributes are strings in markup. This reference keeps the historic
 | `data-blob-wobble-intensity` | `2` | Wobble deformation multiplier. |
 | `data-blob-morph-autoplay` | `false` | Start the continuous morph loop. |
 | `data-blob-morph-speed` | `7500` | Morph-loop cycle duration in milliseconds. |
-| `data-blob-morph-intensity` | `1` | RMS fraction of variance moved each cycle. |
+| `data-blob-morph-intensity` | `1` | Requested RMS displacement as a fraction of variance, before radius clamping; actual movement can be smaller. |
 | `data-blob-morph-tween` | `600` | Transition duration in milliseconds when live shape attributes retune the blob. |
 | `data-blob-drift-autoplay` | `false` | Start DVD-style drift in the positioned parent. |
 | `data-blob-drift-speed` | `1.25` | Drift speed multiplier. |
 | `data-blob-drift-intensity` | `1` | Turn severity for collisions and `deflect()`. |
 | `data-blob-drift-bias` | `0.9` | Collision-radius multiplier, clamped from `0.5` to `1.5`. |
 | `data-blob-drift-click` | `false` | Expose the host as a button that deflects on click, <kbd>Enter</kbd>, or <kbd>Space</kbd>. |
-| `data-blob-drift-start-position` | `random` | `random`, `center`, or `current`. |
+| `data-blob-drift-start-position` | `random` | `random`, `center`, or `current`; edits reposition initialized drift immediately. `current` keeps the displayed position. |
 | `data-blob-is-wobbling` | reflects state | Set `true`/`false` or read the live wobble state. |
 | `data-blob-is-morphing` | reflects state | Set `true`/`false` or read the live morph state. |
 | `data-blob-is-drifting` | reflects state | Set `true`/`false` or read the live drift state. |
@@ -38,7 +38,7 @@ The seventeen configuration attributes control the blob; the four `data-blob-is-
 
 <h3 id="state-properties">State properties</h3>
 
-The element exposes four readonly booleans: `.isWobbling`, `.isMorphing`, `.isDrifting`, and `.isAnimating`. Each mirrors its matching `data-blob-is-*` attribute. Use the master state when a UI needs one pause/resume switch, and the layer properties for a specific control.
+The element exposes four readonly booleans: `.isWobbling`, `.isMorphing`, `.isDrifting`, and `.isAnimating`. Each mirrors its matching `data-blob-is-*` attribute. Shape generation and attribute-retune tweens count as morphing. Use the master state when a UI needs one pause/resume switch, and the layer properties for a specific control.
 
 <h3 id="methods">Instance methods</h3>
 
@@ -52,7 +52,9 @@ blob.generateNewBlob(500);
 blob.deflect();
 ```
 
-`play()` resumes configured auto-play layers. Passing `{ morph, wobble, drift }` forces each listed layer and supplies its timing. `pause()` freezes all three layers in place. `generateNewBlob()` morphs from the exact visible shape to a new silhouette. If continuous morphing is active, it resumes smoothly from the generated points; repeated generation requests retarget the in-flight tween instead of being dropped. Reduced-motion mode completes generation with a 1ms transition. `deflect()` redirects a drifting blob without changing its speed.
+`play()` resumes configured auto-play layers. Passing `{ morph, wobble, drift }` forces each listed layer and supplies its timing. `pause()` freezes all three layers in place. `pauseMorph()` also stops standalone generation or attribute-retune tweens at their visible frame; those standalone requests are canceled rather than resumed. `generateNewBlob()` morphs from the visible shape to a new silhouette. Changing the point count resamples the starting shape, so that transition may begin with a visible approximation. If continuous morphing is active, it resumes smoothly from the generated points; repeated generation requests retarget the in-flight tween instead of being dropped. Reduced-motion mode completes generation with a 1ms transition. `deflect()` redirects a drifting blob without changing its speed.
+
+Timing supplied to `play*()` persists until the matching speed attribute changes; unrelated settings leave it intact. Updating a running morph duration preserves its progress. Drift uses elapsed time, so speed is consistent across display refresh rates. Play and generation calls on a detached element are safe no-ops.
 
 <h3 id="completion-event">Completion event</h3>
 
@@ -81,15 +83,17 @@ const restored = decodeBlobSeed(seed);
 const next = nextMorphShape(path, { variance: 14, intensity: 0.5 });
 ```
 
-The declarations export `BlobPoint`, `BlobGenerationOptions`, `NextMorphShapeOptions`, `BlobPlayOptions`, `DynamoBlob`, and `DynamoBlobAttributes`, and add `<dynamo-blob>` to `HTMLElementTagNameMap` and JSX intrinsic elements.
+The declarations export `BlobPoint`, `BlobGenerationOptions`, `NextMorphShapeOptions`, `BlobPlayOptions`, `DynamoBlob`, and `DynamoBlobAttributes`, and add `<dynamo-blob>` to `HTMLElementTagNameMap` and the global JSX intrinsic elements. JSX uses the framework’s `div` host-attribute types when available; otherwise it accepts common HTML, ARIA, data, style, and native event attributes without a React dependency. Frameworks with a scoped JSX namespace need their own custom-element registration.
 
 <h3 id="lifecycle-accessibility">Lifecycle, SSR, and accessibility</h3>
 
 - Generated SVG is decorative. The host is also hidden from assistive technology unless `data-blob-drift-click` turns it into a keyboard-operable button. Supply `aria-label` or `aria-labelledby` when “Deflect blob” is not enough context.
-- Automatic animation honors `prefers-reduced-motion`; the demo offers explicit controls instead of assuming motion is required.
+- Automatic animation honors `prefers-reduced-motion`, including live preference changes. Explicit `play*()` controls remain available.
 - The module is safe to import without DOM globals. The browser registry guards duplicate definition.
-- Disconnecting the host cancels active animation frames and observation; reconnecting rebuilds the element state.
+- Disconnecting the host cancels active animation frames and observation; reconnecting preserves the visible silhouette and resumes eligible motion.
 - `IntersectionObserver` is only necessary for `data-blob-observe`; the silhouette still renders where it is unavailable.
+
+Drifting blobs share cached host and container measurements. Resize and relevant layout changes invalidate the cache; active frames then batch fresh measurements before drift writes. Shape changes recalculate collision geometry separately. A bounded 250ms containing-block check covers stylesheet edits that produce no observer event; browsers without `ResizeObserver` use throttled dimension checks. Pausing or disconnecting releases the subscription, and the last subscriber removes shared observers and listeners.
 
 <h3 id="troubleshooting">Troubleshooting</h3>
 

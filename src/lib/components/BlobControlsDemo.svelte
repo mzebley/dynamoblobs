@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { generateBlobAndWait } from "../blobCompletion.js";
   import SsrDynamoBlob from "./SsrDynamoBlob.svelte";
+  const lifetime = new AbortController();
   type BlobControl = HTMLElement & {
     generateNewBlob(duration?: number): unknown;
     playWobble(duration?: number): unknown;
@@ -35,18 +37,8 @@
     regenerating = true;
     const duration = reducedMotion ? 1 : compact ? 800 : 500;
     status = "Generating a new blob.";
-    await new Promise<void>((resolve) => {
-      const fallback = window.setTimeout(resolve, duration + 150);
-      blob?.addEventListener(
-        "dynamo-blob-complete",
-        () => {
-          clearTimeout(fallback);
-          resolve();
-        },
-        { once: true },
-      );
-      blob?.generateNewBlob(duration);
-    });
+    await generateBlobAndWait(blob, duration, lifetime.signal, 150);
+    if (lifetime.signal.aborted) return;
     status = "Generated a new deterministic blob silhouette.";
     regenerating = false;
   }
@@ -108,6 +100,7 @@
     const query = matchMedia("(prefers-reduced-motion: reduce)");
     reducedMotion = query.matches;
     void customElements.whenDefined("dynamo-blob").then(() => {
+      if (lifetime.signal.aborted) return;
       syncMotionState();
       ready = true;
       status = "Live blob controls are ready.";
@@ -127,6 +120,7 @@
     };
     query.addEventListener("change", change);
     return () => {
+      lifetime.abort();
       query.removeEventListener("change", change);
       blob?.pauseWobble();
       blob?.pauseMorph();

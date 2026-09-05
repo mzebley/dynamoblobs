@@ -7,6 +7,7 @@
 
 	onMount(() => {
 		let cancelled = false;
+		let revealFrame: number | undefined;
 		const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
 		const syncMotion = () => {
 			field?.querySelectorAll('dynamo-blob').forEach((blob) => {
@@ -15,10 +16,13 @@
 		};
 		const revealWhenReady = async () => {
 			await customElements.whenDefined('dynamo-blob');
-			await new Promise<void>((resolve) => {
-				requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+			if (cancelled) return;
+			revealFrame = requestAnimationFrame(() => {
+				revealFrame = requestAnimationFrame(() => {
+					revealFrame = undefined;
+					if (!cancelled) isReady = true;
+				});
 			});
-			if (!cancelled) isReady = true;
 		};
 
 		syncMotion();
@@ -26,6 +30,7 @@
 		motionPreference.addEventListener('change', syncMotion);
 		return () => {
 			cancelled = true;
+			if (revealFrame !== undefined) cancelAnimationFrame(revealFrame);
 			motionPreference.removeEventListener('change', syncMotion);
 		};
 	});

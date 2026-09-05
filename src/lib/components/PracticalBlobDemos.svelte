@@ -1,5 +1,9 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { generateBlobAndWait } from '../blobCompletion.js';
 	import SsrDynamoBlob from './SsrDynamoBlob.svelte';
+	const lifetime = new AbortController();
+	onMount(() => () => lifetime.abort());
 
 	type BlobElement = HTMLElement & {
 		generateNewBlob(duration?: number): unknown;
@@ -25,23 +29,8 @@
 			(blob): blob is BlobElement => Boolean(blob),
 		);
 
-		await Promise.all(
-			blobs.map(
-				(blob) =>
-					new Promise<void>((resolve) => {
-						const fallback = window.setTimeout(resolve, duration + 180);
-						blob.addEventListener(
-							'dynamo-blob-complete',
-							() => {
-								clearTimeout(fallback);
-								resolve();
-							},
-							{ once: true },
-						);
-						blob.generateNewBlob(duration);
-					}),
-			),
-		);
+		await Promise.all(blobs.map((blob) => generateBlobAndWait(blob, duration, lifetime.signal)));
+		if (lifetime.signal.aborted) return;
 
 		status = 'The cover artwork was remixed.';
 		remixing = false;

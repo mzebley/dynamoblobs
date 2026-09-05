@@ -6,6 +6,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-05
+
+### Fixed
+- Pause now stops standalone shape tweens; disconnected controls, replaced observers, and demo teardown cannot leave animation work running.
+- Automatic motion honors live reduced-motion preferences, while explicit controls and unrelated timing settings retain their intent.
+- Drift uses elapsed time, recovers from zero speed, applies paused speed edits, and responds to live start-position changes; morph timing and reconnects preserve visible progress.
+- Blob styles work inside shadow roots, Space activation requires a key press, and JSX accepts host attributes without a framework dependency.
+
+### Changed
+- Drift shares observer-invalidated geometry caches, batches dimension reads, and releases subscriptions on pause or removal; steady geometry no longer requires per-frame dimension reads.
+- Morph state includes standalone shape transitions; documentation clarifies canceled standalone requests, point-count approximation, and intensity before radius clamping.
+
 ## [1.0.0] - 2026-08-25
 
 ### Added
