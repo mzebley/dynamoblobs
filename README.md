@@ -49,6 +49,7 @@ npm test
 npm run build:docs
 npm run check:docs
 npm run gate
+npm run test:browser
 ```
 
 The docs build generates the committed Zebkit CSS, accessibility input, and project runtime. Package publication contains only `dist`.

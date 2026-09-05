@@ -14,7 +14,7 @@ interface BlobGenerationOptions {
 interface NextMorphShapeOptions {
   /** Radius deviation in internal units. */
   variance: number;
-  /** Magnitude factor — fraction of variance moved (RMS) per cycle. */
+  /** Requested RMS displacement as a fraction of variance, before radius clamping. Actual movement can be smaller. */
   intensity: number;
   /** RNG (defaults to Math.random). */
   random?: () => number;
@@ -68,7 +68,7 @@ declare class DynamoBlob extends HTMLElement {
 
   /** True while the ambient wobble is playing. Mirrors data-blob-is-wobbling. */
   readonly isWobbling: boolean;
-  /** True while the morph loop is playing. Mirrors data-blob-is-morphing. */
+  /** True while a morph loop, generation, or shape-retune tween is playing. Mirrors data-blob-is-morphing. */
   readonly isMorphing: boolean;
   /** True while drift is playing. Mirrors data-blob-is-drifting. */
   readonly isDrifting: boolean;
@@ -85,11 +85,13 @@ declare class DynamoBlob extends HTMLElement {
    * forces that layer on (and tunes it) regardless of its auto-play flag.
    * Ignores `prefers-reduced-motion`.
    *
+   * Play and generation calls on detached elements are no-ops. Timing overrides
+   * persist until the matching speed attribute changes.
    * All control methods return the element, so calls chain:
    * `blob.pauseWobble().playMorph().playDrift(2)`.
    */
   play(options?: BlobPlayOptions): this;
-  /** Freeze wobble, morph, and drift in place. */
+  /** Freeze wobble, shape animation, and drift in place. Cancels standalone shape tweens. */
   pause(): this;
   /** Resume the ambient CSS wobble; optional period in milliseconds. */
   playWobble(durationMs?: number): this;
@@ -97,7 +99,7 @@ declare class DynamoBlob extends HTMLElement {
   pauseWobble(): this;
   /** Start the continuous morph loop; optional per-cycle duration in milliseconds. */
   playMorph(customDuration?: number | null): this;
-  /** Pause the morph loop. */
+  /** Pause the morph loop or cancel a standalone shape tween at its visible frame. */
   pauseMorph(): this;
   /** Resume drift; optional speed multiplier (same scale as data-blob-drift-speed). */
   playDrift(speed?: number): this;
@@ -174,6 +176,48 @@ interface DynamoBlobAttributes {
   'data-blob-is-animating'?: string;
 }
 
+/** Framework-neutral host attributes for the global JSX namespace. */
+interface DynamoBlobHostAttributes {
+  id?: string;
+  class?: string;
+  className?: string;
+  title?: string;
+  slot?: string;
+  role?: string;
+  lang?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
+  hidden?: boolean | 'hidden' | 'until-found';
+  inert?: boolean;
+  tabindex?: number | string;
+  tabIndex?: number;
+  accesskey?: string;
+  accessKey?: string;
+  draggable?: boolean | 'true' | 'false';
+  contenteditable?: boolean | 'true' | 'false' | 'plaintext-only';
+  contentEditable?: boolean | 'true' | 'false' | 'plaintext-only';
+  spellcheck?: boolean | 'true' | 'false';
+  spellCheck?: boolean | 'true' | 'false';
+  translate?: 'yes' | 'no';
+  style?: string | { [property: string]: string | number | undefined };
+  children?: unknown;
+  key?: string | number;
+  ref?: unknown;
+  [attribute: `aria-${string}`]: string | number | boolean | undefined;
+  [attribute: `data-${string}`]: string | number | boolean | undefined;
+}
+
+type DynamoBlobNativeEventAttributes = {
+  [Name in keyof HTMLElementEventMap as `on${Name}`]?: (event: HTMLElementEventMap[Name]) => void;
+};
+
+// Use the JSX framework's own HTML contract when it supplies one, retaining
+// framework-specific event, style, and ref types without importing React.
+type DynamoBlobJSXAttributes = DynamoBlobAttributes & (
+  JSX.IntrinsicElements extends { div: infer HostAttributes }
+    ? HostAttributes
+    : DynamoBlobHostAttributes & DynamoBlobNativeEventAttributes
+);
+
 declare global {
   interface HTMLElementTagNameMap {
     'dynamo-blob': DynamoBlob;
@@ -181,7 +225,7 @@ declare global {
 
   namespace JSX {
     interface IntrinsicElements {
-      'dynamo-blob': Partial<DynamoBlobAttributes>;
+      'dynamo-blob': DynamoBlobJSXAttributes;
     }
   }
 }

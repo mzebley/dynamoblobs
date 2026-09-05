@@ -246,3 +246,214 @@ describe('pause / resume continuity', () => {
     );
   });
 });
+
+describe('runtime transition regressions', () => {
+  it('freezes standalone generation and retunes, and reports transient motion', () => {
+    const el = makeBlob({ 'data-blob-wobble-autoplay': 'false' });
+    for (const start of [() => el.generateNewBlob(1000), () => el.setAttribute('data-blob-variance', '12')]) {
+      start();
+      assert.equal(el.isMorphing, true);
+      assert.equal(el.isAnimating, true);
+      frame(16); frame(200);
+      const frozen = el.path.getAttribute('d');
+      el.pause();
+      frame(500);
+      assert.equal(el.path.getAttribute('d'), frozen);
+      assert.equal(el.isAnimating, false);
+      assert.equal(rafQueue.size, 0);
+    }
+  });
+
+  it('does not schedule after removal and reconnects without resetting the frame', () => {
+    const el = makeBlob();
+    el.playMorph(1000);
+    frame(16); frame(300);
+    const visible = el.path.getAttribute('d');
+    el.remove();
+    el.playMorph().playDrift().generateNewBlob();
+    assert.equal(rafQueue.size, 0);
+    document.body.append(el);
+    assert.equal(el.path.getAttribute('d'), visible);
+    frame(0);
+    assert.equal(el.path.getAttribute('d'), visible);
+  });
+
+  it('takes over a standalone tween and retimes a live morph without jumping', () => {
+    const el = makeBlob();
+    el.generateNewBlob(1000);
+    frame(16); frame(300);
+    const visible = el.path.getAttribute('d');
+    el.playMorph(1000);
+    frame(0);
+    assert.equal(el.path.getAttribute('d'), visible);
+    frame(200);
+    const retimed = el.path.getAttribute('d');
+    el.playMorph(200);
+    frame(0);
+    assert.equal(el.path.getAttribute('d'), retimed);
+    assert.equal(el._morphDuration, 200);
+    el.playMorph(Infinity);
+    assert.ok(Number.isFinite(el._morphDuration));
+  });
+
+  it('keeps independent imperative settings and restores zero or paused drift speed', () => {
+    const el = makeBlob();
+    el.playWobble(1234).playDrift(4);
+    el.setAttribute('data-blob-morph-intensity', '2');
+    assert.equal(el.style.getPropertyValue('--dynamo-blob-time'), '1234ms');
+    assert.equal(el.driftSpeed, 4);
+    el.playDrift(0).playDrift(2);
+    assert.ok(Math.hypot(el.driftVelX, el.driftVelY) > 0);
+    el.pauseDrift();
+    el.setAttribute('data-blob-drift-speed', '5');
+    el.playDrift();
+    assert.ok(Math.abs(Math.hypot(el.driftVelX, el.driftVelY) - Math.SQRT2 * 0.5) < 1e-12);
+  });
+
+  it('moves the same distance over the same elapsed time at different frame rates', () => {
+    const distance = (fps) => {
+      const el = makeBlob();
+      el.driftBounds = () => ({ w: 100, h: 100, pw: 10000, ph: 10000 });
+      el.setAttribute('data-blob-drift-start-position', 'center');
+      el.playDrift(1);
+      const start = el.driftPosX;
+      for (let i = 0; i < fps; i++) frame(1000 / fps);
+      const result = Math.abs(el.driftPosX - start);
+      el.remove();
+      return result;
+    };
+    assert.ok(Math.abs(distance(60) - distance(120)) < 1e-8);
+  });
+
+  it('repositions initialized drift live and keeps current position when requested', () => {
+    const el = makeBlob();
+    el.driftBounds = () => ({ w: 100, h: 100, pw: 1000, ph: 800 });
+    el.playDrift();
+    el.setAttribute('data-blob-drift-start-position', 'center');
+    assert.equal(el.driftPosX, 450);
+    assert.equal(el.driftPosY, 350);
+    el.setAttribute('data-blob-drift-start-position', 'current');
+    assert.equal(el.driftPosX, 450);
+    assert.equal(el.driftPosY, 350);
+  });
+
+  it('gates live automatic motion, follows preference changes, and preserves explicit overrides', () => {
+    const listeners = new Set();
+    const query = { matches: true, addEventListener: (_, cb) => listeners.add(cb), removeEventListener: (_, cb) => listeners.delete(cb) };
+    const previous = window.matchMedia;
+    window.matchMedia = () => query;
+    try {
+      const el = makeBlob({ 'data-blob-wobble-autoplay': 'false' });
+      el.setAttribute('data-blob-morph-autoplay', 'true');
+      el.setAttribute('data-blob-drift-autoplay', 'true');
+      assert.equal(el.isAnimating, false);
+      query.matches = false;
+      for (const cb of listeners) cb();
+      assert.equal(el.isMorphing, true);
+      assert.equal(el.isDrifting, true);
+      el.setAttribute('data-blob-morph-speed', '250');
+      query.matches = true;
+      for (const cb of listeners) cb();
+      assert.equal(el.isMorphing, false);
+      query.matches = false;
+      for (const cb of listeners) cb();
+      assert.equal(el.isMorphing, true);
+      el.pauseMorph();
+      el.playDrift();
+      query.matches = true;
+      for (const cb of listeners) cb();
+      assert.equal(el.isMorphing, false);
+      assert.equal(el.isDrifting, true);
+      query.matches = false;
+      for (const cb of listeners) cb();
+      assert.equal(el.isMorphing, false);
+      el.pause();
+      el.setAttribute('data-blob-wobble-autoplay', 'true');
+      assert.equal(el.isAnimating, false);
+      el.play();
+      assert.equal(el.isWobbling, true);
+      el.remove();
+      assert.equal(listeners.size, 0);
+    } finally { window.matchMedia = previous; }
+  });
+
+  it('installs one stylesheet in each containing shadow root', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = host.attachShadow({ mode: 'open' });
+    root.append(document.createElement('dynamo-blob'), document.createElement('dynamo-blob'));
+    assert.equal(root.querySelectorAll('#dynamoblobs-styles').length, 1);
+  });
+
+  it('requires Space keydown and cancels activation on blur', () => {
+    const el = makeBlob({ 'data-blob-drift-click': 'true' });
+    let clicks = 0;
+    el.addEventListener('click', () => clicks++);
+    const key = (type) => el.dispatchEvent(new window.KeyboardEvent(type, { key: ' ', bubbles: true }));
+    key('keyup');
+    assert.equal(clicks, 0);
+    key('keydown');
+    el.dispatchEvent(new window.Event('blur'));
+    key('keyup');
+    assert.equal(clicks, 0);
+    key('keydown'); key('keyup');
+    assert.equal(clicks, 1);
+  });
+});
+
+
+describe('motion ownership across configuration and disconnection', () => {
+  it('keeps a standalone tween standalone after reconnect and applies only detached edits', () => {
+    const el = makeBlob({ 'data-blob-wobble-autoplay': 'false' });
+    el.playWobble(1234).pauseWobble().generateNewBlob(1000);
+    frame(16); frame(200);
+    el.remove();
+    el.setAttribute('data-blob-points', '5');
+    document.body.append(el);
+    assert.equal(el._morphing, false);
+    assert.equal(el.points, 5);
+    assert.equal(el.style.getPropertyValue('--dynamo-blob-time'), '1234ms');
+    frame(16); frame(1000);
+    assert.equal(rafQueue.size, 0);
+    el.playMorph();
+    el.remove();
+    el.pause();
+    document.body.append(el);
+    assert.equal(el.isAnimating, false);
+  });
+
+  it('keeps pause idempotent and unrelated autoplay edits independent', () => {
+    const el = makeBlob({ 'data-blob-wobble-autoplay': 'false' });
+    el.generateNewBlob(1000);
+    frame(16); frame(200);
+    el.setAttribute('data-blob-drift-autoplay', 'true');
+    assert.equal(el.isGeneratingBlob, true);
+    el.playMorph(1000);
+    frame(16); frame(200);
+    el.pauseMorph();
+    const fraction = el._morphProgress;
+    el.pauseMorph();
+    assert.equal(el._morphProgress, fraction);
+    el.pause();
+    el.setAttribute('data-blob-is-animating', 'false');
+    el.setAttribute('data-blob-morph-autoplay', 'true');
+    assert.equal(el.isAnimating, false);
+  });
+});
+
+
+it('preserves detached seed edits and rebuilds removed internal nodes with the visible shape', () => {
+  const el = makeBlob({ 'data-blob-wobble-autoplay': 'false' });
+  el.generateNewBlob(1000);
+  frame(16); frame(200);
+  const visible = el.path.getAttribute('d');
+  el.remove();
+  el.replaceChildren();
+  document.body.append(el);
+  assert.equal(el.path.getAttribute('d'), visible);
+  el.remove();
+  el.setAttribute('data-blob-seed', 'new-authored-seed');
+  document.body.append(el);
+  assert.equal(el.getAttribute('data-blob-seed'), 'new-authored-seed');
+  assert.equal(el.seedString, 'new-authored-seed');
+});

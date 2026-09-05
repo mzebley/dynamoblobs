@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { generateBlobAndWait } from '../blobCompletion.js';
 	import SsrDynamoBlob from './SsrDynamoBlob.svelte';
+	const lifetime = new AbortController();
 
 	type Blob = HTMLElement & { generateNewBlob(duration?: number): unknown };
 	const steps = [
@@ -36,19 +38,8 @@
 		activeIndex = activeIndex >= steps.length - 1 ? 0 : activeIndex + 1;
 		const duration = reducedMotion ? 1 : 560;
 
-		await new Promise<void>((resolve) => {
-			if (!blob) return resolve();
-			const fallback = window.setTimeout(resolve, duration + 180);
-			blob.addEventListener(
-				'dynamo-blob-complete',
-				() => {
-					clearTimeout(fallback);
-					resolve();
-				},
-				{ once: true },
-			);
-			blob.generateNewBlob(duration);
-		});
+		if (blob) await generateBlobAndWait(blob, duration, lifetime.signal);
+		if (lifetime.signal.aborted) return;
 
 		busy = false;
 		button?.focus();
@@ -59,7 +50,10 @@
 		reducedMotion = query.matches;
 		const change = (event: MediaQueryListEvent) => (reducedMotion = event.matches);
 		query.addEventListener('change', change);
-		return () => query.removeEventListener('change', change);
+		return () => {
+			lifetime.abort();
+			query.removeEventListener('change', change);
+		};
 	});
 </script>
 

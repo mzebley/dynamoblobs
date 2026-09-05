@@ -1,6 +1,6 @@
 {
   "name": "dynamoblobs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Lightweight, dependency-free generative SVG blobs that wobble, morph, and drift — delivered as a drop-in custom element.",
   "sideEffects": true,
@@ -27,6 +27,7 @@
   ],
   "scripts": {
     "test": "node --test test/*.test.js",
+    "test:browser": "node --test test/drift-geometry.browser.mjs",
     "test:release": "node --test scripts/release/*.test.mjs",
     "build": "rollup -c",
     "dev:docs": "vite dev",
