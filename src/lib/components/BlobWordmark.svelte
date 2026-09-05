@@ -137,7 +137,7 @@
 	.blob-wordmark {
 		position: relative;
 		inline-size: 100%;
-		color: var(--dynamo-wordmark-base-color, var(--zbk-accent-primary-ink, #274848));
+		color: var(--dynamo-wordmark-base-color, var(--zbk-brand-ink));
 	}
 
 	svg {
@@ -152,7 +152,7 @@
 	}
 
 	.wordmark-blobs {
-		fill: var(--dynamo-wordmark-blob-color, var(--zbk-accent-secondary-canvas-emphasis, #e6c554));
+		fill: var(--dynamo-wordmark-blob-color, var(--zbk-brand-canvas));
 	}
 
 	.blob-generators {

@@ -1,56 +1,56 @@
 {
   "50": {
-    "$value": "{color.sea-50}",
+    "$value": "{color.lavenderfield-50}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "100": {
-    "$value": "{color.sea-100}",
+    "$value": "{color.lavenderfield-100}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "200": {
-    "$value": "{color.sea-200}",
+    "$value": "{color.lavenderfield-200}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "300": {
-    "$value": "{color.sea-300}",
+    "$value": "{color.lavenderfield-300}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "400": {
-    "$value": "{color.sea-400}",
+    "$value": "{color.lavenderfield-400}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "500": {
-    "$value": "{color.sea-500}",
+    "$value": "{color.lavenderfield-500}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "600": {
-    "$value": "{color.sea-600}",
+    "$value": "{color.lavenderfield-600}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "700": {
-    "$value": "{color.sea-700}",
+    "$value": "{color.lavenderfield-700}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "800": {
-    "$value": "{color.sea-800}",
+    "$value": "{color.lavenderfield-800}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "900": {
-    "$value": "{color.sea-900}",
+    "$value": "{color.lavenderfield-900}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },
   "950": {
-    "$value": "{color.sea-950}",
+    "$value": "{color.lavenderfield-950}",
     "$type": "color",
     "$description": "For secondary accent surfaces."
   },

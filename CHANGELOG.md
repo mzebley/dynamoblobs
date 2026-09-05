@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-25
+
 ### Added
 - Release-candidate and production pipelines now enforce the first-public-release contract, upload inspected tarballs, publish npm and GitHub Package variants, and finalize immutable GitHub releases.
 - Release checks keep package metadata, generated bundles, the README, installation examples, and the documented public API synchronized.

@@ -83,7 +83,7 @@ body {
 }
 
 main {
-    background: var(--zbk-app-canvas, #fff);
+    position: relative;
 }
 
 .docs-layout {
@@ -141,16 +141,11 @@ pre.prose {
 .shiki {
     max-inline-size: 100%;
     overflow-x: auto;
-    background-color: var(--shiki-light-bg);
 }
 
 html[data-zbk-theme='dark'] .shiki,
 html[data-zbk-theme='dark'] .shiki span {
     color: var(--shiki-dark);
-}
-
-html[data-zbk-theme='dark'] .shiki {
-    background-color: var(--shiki-dark-bg);
 }
 
 /* Before JavaScript upgrades the component, the semantic pre/code fallback

@@ -90,9 +90,9 @@
 		</svg>
 	</div>
 	<figcaption>
-		<p class="demo-eyebrow">Studio visit · 06</p>
-		<h4>Let the crop carry the character.</h4>
-		<p>The source image stays rectangular and useful. Only the SVG clip path changes, so the same asset can still serve ordinary image layouts elsewhere.</p>
+		<p class="demo-eyebrow">Field Notes · 06</p>
+		<h4>Don't be afraid to get gooey.</h4>
+		<p class="prose">The source image stays rectangular and useful. Only the SVG clip path changes, so the same asset can still serve ordinary image layouts elsewhere.</p>
 	</figcaption>
 </figure>
 
@@ -101,10 +101,10 @@
 		display: grid;
 		grid-template-columns: minmax(14rem, 0.92fr) minmax(0, 1.08fr);
 		align-items: center;
-		gap: clamp(var(--zbk-spacing-105), 5vw, var(--zbk-spacing-4));
-		padding: clamp(var(--zbk-spacing-105), 5vw, var(--zbk-spacing-3));
+		gap: var(--zbk-spacing-105);
+		padding: var(--zbk-spacing-105) var(--zbk-spacing-205) var(--zbk-spacing-105) var(--zbk-spacing-05);
 		margin-block: var(--zbk-spacing-2) var(--zbk-spacing-3);
-		border: var(--zbk-border-width-sm) solid var(--zbk-brand-border-muted);
+		border: var(--zbk-border-width-sm) solid var(--zbk-app-border);
 		border-radius: var(--zbk-border-radius-lg);
 		background: var(--zbk-app-canvas-subtle);
 		box-shadow: var(--zbk-elevation-sm);
@@ -113,7 +113,7 @@
 
 	.crop-art {
 		position: relative;
-		inline-size: min(100%, 23rem);
+		inline-size: min(100%, 28rem);
 		justify-self: center;
 	}
 
@@ -157,7 +157,7 @@
 		margin: 0;
 		color: var(--zbk-brand-ink-emphasis);
 		font-family: var(--zbk-font-family-heading);
-		font-size: clamp(var(--zbk-font-size-2xl), 4vw, var(--zbk-font-size-3xl));
+		font-size: var(--zbk-font-size-2xl);
 		line-height: var(--zbk-line-height-2);
 	}
 
@@ -169,6 +169,7 @@
 	@media (max-width: 44rem) {
 		.crop-demo {
 			grid-template-columns: minmax(0, 1fr);
+			padding: var(--zbk-spacing-105);
 		}
 
 		.crop-art {

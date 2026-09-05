@@ -1,56 +1,56 @@
 {
   "50": {
-    "$value": "{color.mint-50}",
+    "$value": "{color.sea-50}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "100": {
-    "$value": "{color.mint-100}",
+    "$value": "{color.sea-100}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "200": {
-    "$value": "{color.mint-200}",
+    "$value": "{color.sea-200}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "300": {
-    "$value": "{color.mint-300}",
+    "$value": "{color.sea-300}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "400": {
-    "$value": "{color.mint-400}",
+    "$value": "{color.sea-400}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "500": {
-    "$value": "{color.mint-500}",
+    "$value": "{color.sea-500}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "600": {
-    "$value": "{color.mint-600}",
+    "$value": "{color.sea-600}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "700": {
-    "$value": "{color.mint-700}",
+    "$value": "{color.sea-700}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "800": {
-    "$value": "{color.mint-800}",
+    "$value": "{color.sea-800}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "900": {
-    "$value": "{color.mint-900}",
+    "$value": "{color.sea-900}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },
   "950": {
-    "$value": "{color.mint-950}",
+    "$value": "{color.sea-950}",
     "$type": "color",
     "$description": "For primary branded surfaces."
   },

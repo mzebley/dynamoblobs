@@ -10,7 +10,7 @@
         "icon-size": "{spacing.105}"
       }
     },
-        "sm": {
+    "sm": {
       "axis": "size",
       "description": "Compact type, padding, and icon sizing.",
       "overrides": {
@@ -144,6 +144,36 @@
         "border-color-active": "{brand.canvas}",
         "border-width": "{border.width-sm}",
         "border-radius": "{border.radius-md}"
+      }
+    },
+    "wave-action-inverse": {
+      "axis": "style",
+      "description": "Outlined, elevated action treatment matching the Dynamowaves demo controls.",
+      "overrides": {
+        "canvas": "transparent",
+        "canvas-hover": "color-mix(in srgb, var(--zbk-brand-950) 32.5%, transparent)",
+        "canvas-active": "color-mix(in srgb, var(--zbk-brand-950) 70%, transparent)",
+        "ink": "{brand.ink-inverse-emphasis}",
+        "ink-hover": "{brand.ink-inverse-emphasis}",
+        "ink-active": "{brand.ink-inverse-emphasis}",
+        "border-color": "{brand.canvas}",
+        "border-color-hover": "{brand.canvas}",
+        "border-color-active": "{brand.canvas}",
+        "border-width": "{border.width-sm}",
+        "border-radius": "{border.radius-md}",
+                "box-shadow": "var(--zbk-spacing-05) var(--zbk-spacing-05) 0 var(--zbk-spacing-2px) color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+        "box-shadow-hover": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-950) 50%, transparent)",
+        "box-shadow-active": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+        "box-shadow-focus": "0 0 0 0 color-mix(in srgb, var(--zbk-brand-canvas) 50%, transparent)",
+        "box-shadow-disabled": "none",
+        "transform": "none",
+        "transform-hover": "none",
+        "transform-active": "scale(.985)",
+        "transform-focus": "none",
+        "transform-disabled": "none",
+        "transition-duration": "{transition.duration-default}",
+        "transition-timing-function": "{transition.playful-fx-function-default}",
+        "transition-delay": "0ms"
       }
     },
     "wave-action-strong": {

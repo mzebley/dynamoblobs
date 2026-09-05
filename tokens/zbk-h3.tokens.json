@@ -40,7 +40,7 @@
     "$description": "Outgoing spacing request contributed by an H3 to the next direct child in a .prose flow. The resolved gap is the larger of this spacing-after and the next treatment's spacing-before; an eyebrow immediately followed by a heading intentionally uses the eyebrow's tighter outgoing gap."
   },
   "color": {
-    "$value": "{accent-primary.ink}",
+    "$value": "{accent-secondary.ink}",
     "$type": "color",
     "$description": "Color of H3 elements with .prose applied directly or that are a child of a .prose container."
   },
